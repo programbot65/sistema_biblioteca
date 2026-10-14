@@ -1,0 +1,2 @@
+# Esta carpeta guarda la base de datos (biblioteca.db) y los respaldos.
+# El archivo de la base de datos no se versiona; se crea con "npm run db:reset".

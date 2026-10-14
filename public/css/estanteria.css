@@ -1,0 +1,642 @@
+/* ==========================================================================
+   Estantería interactiva — edición "Noche Digital" (holograma)
+   --------------------------------------------------------------------------
+   Solo la parte visual. El cálculo de posiciones y los gestos viven en
+   `js/navegacion.js`. Todas las piezas de los libros van bajo `.estanteria`
+   para no interferir con las tarjetas del catálogo (que usan .libro fuera
+   de aquí).
+   ========================================================================== */
+
+/* ---------- 1. Zona y anillo ---------- */
+.estanteria-zona {
+  position: relative;
+  width: 100%;
+  height: clamp(460px, 70vh, 660px);
+  overflow: hidden;
+  border-radius: 24px;
+  touch-action: pan-y;
+  background:
+    radial-gradient(46% 36% at 50% 42%, rgba(72, 229, 255, .08), transparent 65%),
+    radial-gradient(40% 34% at 50% 42%, rgba(149, 112, 255, .09), transparent 65%),
+    linear-gradient(180deg, rgba(20, 29, 54, .5), rgba(8, 11, 24, .55));
+  border: 1px solid rgba(160, 200, 255, .13);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 18px 60px rgba(2, 6, 20, .5);
+  -webkit-backdrop-filter: saturate(150%) blur(10px);
+  backdrop-filter: saturate(150%) blur(10px);
+}
+
+.estanteria {
+  position: absolute;
+  inset: 0;
+  perspective: 1700px;
+  transform-style: preserve-3d;
+  cursor: grab;
+}
+
+.estanteria.esta-arrastrando { cursor: grabbing; }
+
+/* El anillo no intercepta clics en áreas vacías. */
+.estanteria__anillo {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+.estanteria__anillo > * { pointer-events: auto; }
+
+/* Halo decorativo que sugiere la corona de un reloj inteligente */
+.estanteria__corona {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 340px;
+  height: 340px;
+  margin: -170px 0 0 -170px;
+  border-radius: 50%;
+  border: 1px dashed rgba(72, 229, 255, .35);
+  box-shadow: 0 0 40px rgba(72, 229, 255, .08), inset 0 0 40px rgba(149, 112, 255, .06);
+  transform: translateZ(-260px);
+  pointer-events: none;
+  animation: girar-lento 46s linear infinite;
+}
+
+.estanteria__corona::before {
+  content: "";
+  position: absolute;
+  inset: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(149, 112, 255, .3);
+}
+
+@keyframes girar-lento {
+  to { transform: translateZ(-260px) rotate(360deg); }
+}
+
+/* ---------- 2. Núcleo central ---------- */
+.estanteria__nucleo {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 200px;
+  height: 200px;
+  margin: -100px 0 0 -100px;
+  border-radius: 50%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: .15rem;
+  text-align: center;
+  padding: 1rem;
+  transform: translateZ(-60px);
+  z-index: 5;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(72, 229, 255, .22), rgba(20, 29, 54, .88) 58%, rgba(10, 14, 30, .94) 100%);
+  border: 1px solid rgba(72, 229, 255, .35);
+  box-shadow:
+    0 0 50px rgba(72, 229, 255, .14),
+    0 20px 46px rgba(0, 0, 0, .5),
+    inset 0 1px 0 rgba(255, 255, 255, .14);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
+  backdrop-filter: saturate(180%) blur(16px);
+  transition: box-shadow .4s ease;
+}
+
+.nucleo__icono {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  color: #06121F;
+  background: linear-gradient(140deg, var(--cian, #48E5FF), var(--violeta, #9570FF));
+  box-shadow: 0 0 22px rgba(72, 229, 255, .45);
+  margin-bottom: .35rem;
+}
+
+.nucleo__marca {
+  font-size: .66rem;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--texto-suave, #9AA8C7);
+}
+
+.nucleo__titulo {
+  font-size: 1.06rem;
+  font-weight: 850;
+  letter-spacing: -.01em;
+  line-height: 1.1;
+  background: linear-gradient(90deg, #fff, var(--cian, #48E5FF));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.nucleo__seccion {
+  font-size: .84rem;
+  font-weight: 700;
+  color: var(--cian, #48E5FF);
+  min-height: 1.1rem;
+  text-shadow: 0 0 14px rgba(72, 229, 255, .5);
+}
+
+.nucleo__pista {
+  font-size: .66rem;
+  color: var(--texto-suave, #9AA8C7);
+  letter-spacing: .04em;
+  margin-top: .2rem;
+}
+
+/* Anillo de progreso que muestra cuántos libros hay en el carrusel */
+.nucleo__pasos {
+  display: flex;
+  gap: .3rem;
+  margin-top: .45rem;
+}
+
+.nucleo__paso {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(154, 168, 199, .35);
+  transition: background .3s ease, transform .3s ease, width .3s ease;
+}
+
+.nucleo__paso.activo {
+  background: var(--cian, #48E5FF);
+  box-shadow: 0 0 10px rgba(72, 229, 255, .8);
+  width: 14px;
+  border-radius: 3px;
+}
+
+/* ---------- 3. El libro (piezas bajo .estanteria) ---------- */
+/* Neutraliza los estilos de tarjeta del catálogo dentro de la estantería */
+.estanteria .libro {
+  --ancho: 172px;
+  --alto: 232px;
+  --grosor: 15px;
+
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--ancho);
+  height: var(--alto);
+  margin-left: calc(var(--ancho) / -2);
+  margin-top: calc(var(--alto) / -2);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+  display: block;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  will-change: transform, opacity, filter;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.estanteria .libro::after { content: none; }
+.estanteria .libro:hover,
+.estanteria .libro:focus-visible {
+  transform: none; /* la posición la fija el motor en línea */
+  box-shadow: none;
+  border-color: transparent;
+  outline: none;
+}
+
+.estanteria .libro:focus { outline: none; }
+
+.estanteria .libro__escena {
+  position: absolute;
+  inset: 0;
+  perspective: 780px;
+  transform-style: preserve-3d;
+  transition: transform .42s cubic-bezier(.22, .9, .28, 1), filter .3s ease;
+  will-change: transform;
+}
+
+/* Al pasar el puntero el libro se acerca, crece y se inclina hacia el lector */
+.estanteria .libro:hover .libro__escena,
+.estanteria .libro:focus-visible .libro__escena {
+  transform: translateZ(78px) scale(1.055) rotateX(-3deg);
+}
+
+.estanteria .libro__sombra {
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  width: 82%;
+  height: 26px;
+  transform: translateX(-50%) scaleX(calc(.5 + var(--frente, 1) * .5));
+  background: radial-gradient(closest-side, rgba(72, 229, 255, .35), rgba(72, 229, 255, 0) 72%);
+  filter: blur(5px);
+  transition: opacity .35s ease, transform .42s cubic-bezier(.22, .9, .28, 1);
+  opacity: calc(.35 + var(--frente, 1) * .65);
+}
+
+.estanteria .libro__volumen {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateY(-13deg);
+}
+
+/* Lomo del libro (lado izquierdo) */
+.estanteria .libro__lomo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--grosor);
+  height: 100%;
+  border-radius: 4px 0 0 4px;
+  background: linear-gradient(90deg, var(--tapa-oscura) 0%, var(--tapa-media) 62%, var(--tapa-clara) 100%);
+  box-shadow: inset -2px 0 5px rgba(0, 0, 0, .45);
+  transform: translateZ(2px);
+}
+
+/* Bloque de páginas visible en el canto derecho */
+.estanteria .libro__paginas {
+  position: absolute;
+  right: 0;
+  top: 3px;
+  width: 9px;
+  height: calc(100% - 6px);
+  border-radius: 0 4px 4px 0;
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(10, 15, 32, .5) 0 1px,
+      rgba(230, 240, 255, .9) 1px 3px);
+  box-shadow: inset 2px 0 4px rgba(0, 0, 0, .3);
+  transform: translateZ(-6px);
+}
+
+/* Cara interior que se revela al abrir la tapa */
+.estanteria .libro__interior {
+  position: absolute;
+  inset: 0 6px 0 var(--grosor);
+  border-radius: 3px;
+  padding: 1rem .8rem;
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: .4rem;
+  background: linear-gradient(160deg, #10172B, #1B2544);
+  border: 1px solid rgba(72, 229, 255, .22);
+  box-shadow: inset 0 0 24px rgba(72, 229, 255, .06);
+  transform: translateZ(0);
+  opacity: 0;
+  transition: opacity .3s ease .06s;
+}
+
+.estanteria .libro__interior-lineas {
+  width: 100%;
+  height: 46px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(0deg,
+    rgba(72, 229, 255, .18) 0 2px,
+    transparent 2px 7px);
+}
+
+.estanteria .libro__interior-titulo {
+  font-size: .95rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.15;
+}
+
+.estanteria .libro__interior-pie {
+  margin-top: auto;
+  font-size: .74rem;
+  line-height: 1.35;
+  color: var(--texto-suave, #9AA8C7);
+}
+
+.estanteria .libro__interior-icono {
+  color: var(--cian, #48E5FF);
+  opacity: .9;
+  filter: drop-shadow(0 0 8px rgba(72, 229, 255, .5));
+}
+
+/* Tapa trasera: se separa un poco cuando el libro se abre */
+.estanteria .libro__tapa--atras {
+  position: absolute;
+  inset: 2px 3px -2px 2px;
+  border-radius: 3px 6px 6px 3px;
+  background: var(--tapa-oscura);
+  transform-origin: right center;
+  transform: translateZ(-4px);
+  transition: transform .42s cubic-bezier(.22, .9, .28, 1);
+}
+
+/* Tapa delantera: gira sobre el lomo al abrirse */
+.estanteria .libro__tapa--delante {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px 7px 7px 4px;
+  transform-origin: left center;
+  transform: translateZ(12px);
+  transition: transform .42s cubic-bezier(.22, .9, .28, 1);
+  display: grid;
+  grid-template-rows: auto 1fr auto auto auto;
+  justify-items: center;
+  align-items: center;
+  padding: .85rem .7rem .7rem;
+  text-align: center;
+  color: #fff;
+  background:
+    linear-gradient(150deg, var(--tapa-clara) 0%, var(--tapa-media) 46%, var(--tapa-oscura) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .22),
+    inset -14px 0 26px rgba(0, 0, 0, .3),
+    0 18px 40px rgba(0, 0, 0, .55),
+    0 0 26px rgba(72, 229, 255, .07);
+  overflow: hidden;
+}
+
+/* Reflejo diagonal sutil sobre la tapa */
+.estanteria .libro__tapa--delante::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg,
+    rgba(255, 255, 255, .3) 0%,
+    rgba(255, 255, 255, .06) 32%,
+    transparent 55%);
+  pointer-events: none;
+}
+
+.estanteria .libro__marca {
+  justify-self: start;
+  font-size: .56rem;
+  font-weight: 800;
+  letter-spacing: .22em;
+  opacity: .85;
+  text-transform: uppercase;
+}
+
+.estanteria .libro__icono {
+  align-self: center;
+  opacity: .95;
+  filter: drop-shadow(0 0 10px rgba(72, 229, 255, .45));
+}
+
+.estanteria .libro__titulo {
+  align-self: end;
+  font-size: .92rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  line-height: 1.15;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, .45);
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: none;
+}
+
+.estanteria .libro__regla {
+  width: 34px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--cian, #48E5FF), var(--violeta, #9570FF));
+  box-shadow: 0 0 8px rgba(72, 229, 255, .7);
+  margin: .45rem 0 .3rem;
+}
+
+.estanteria .libro__codigo {
+  align-self: end;
+  font-size: .58rem;
+  letter-spacing: .16em;
+  opacity: .75;
+  font-variant-numeric: tabular-nums;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+}
+
+/* Estado: el libro del frente se distingue con un borde de luz */
+.estanteria .libro.es-frente .libro__tapa--delante {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .32),
+    inset -14px 0 26px rgba(0, 0, 0, .3),
+    0 24px 52px rgba(0, 0, 0, .6),
+    0 0 0 2px rgba(72, 229, 255, .55),
+    0 0 30px rgba(72, 229, 255, .25);
+}
+
+.estanteria .libro:focus-visible .libro__tapa--delante {
+  outline: 2px solid var(--cian, #48E5FF);
+  outline-offset: 3px;
+}
+
+/* --- Apertura del libro al pasar el puntero --- */
+.estanteria .libro:hover .libro__tapa--delante,
+.estanteria .libro:focus-visible .libro__tapa--delante {
+  transform: translateZ(12px) rotateY(62deg);
+}
+
+.estanteria .libro:hover .libro__tapa--atras,
+.estanteria .libro:focus-visible .libro__tapa--atras {
+  transform: translateZ(-4px) rotateY(-11deg);
+}
+
+.estanteria .libro:hover .libro__interior,
+.estanteria .libro:focus-visible .libro__interior {
+  opacity: 1;
+}
+
+.estanteria .libro:hover .libro__sombra,
+.estanteria .libro:focus-visible .libro__sombra {
+  transform: translateX(-50%) scaleX(calc(.6 + var(--frente, 1) * .62));
+  opacity: 1;
+}
+
+/* El lomo se ilumina un poco para reforzar el relieve */
+.estanteria .libro:hover .libro__lomo,
+.estanteria .libro:focus-visible .libro__lomo {
+  box-shadow: inset -2px 0 5px rgba(0, 0, 0, .3), 0 0 16px rgba(72, 229, 255, .4);
+}
+
+/* ---------- 4. Tonos por sección (neón contenido) ---------- */
+.estanteria .libro--azul {
+  --tapa-clara: #2E7FC4;
+  --tapa-media: #1B5A94;
+  --tapa-oscura: #0E2E52;
+}
+
+.estanteria .libro--violeta {
+  --tapa-clara: #8A6FF0;
+  --tapa-media: #5F46B8;
+  --tapa-oscura: #2C2158;
+}
+
+.estanteria .libro--naranja {
+  --tapa-clara: #D8954E;
+  --tapa-media: #A86A2E;
+  --tapa-oscura: #4E2E12;
+}
+
+.estanteria .libro--verde {
+  --tapa-clara: #3FA98A;
+  --tapa-media: #23785E;
+  --tapa-oscura: #0F3A2E;
+}
+
+/* ---------- 5. Controles y pistas ---------- */
+.estanteria__barra {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: .8rem;
+  flex-wrap: wrap;
+}
+
+.estanteria__control {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(72, 229, 255, .35);
+  background: rgba(14, 20, 38, .7);
+  -webkit-backdrop-filter: saturate(150%) blur(12px);
+  backdrop-filter: saturate(150%) blur(12px);
+  color: var(--cian, #48E5FF);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .45), 0 0 18px rgba(72, 229, 255, .1);
+  transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+}
+.estanteria__control svg { width: 20px; height: 20px; }
+
+.estanteria__control:hover {
+  background: linear-gradient(140deg, var(--cian, #48E5FF), var(--violeta, #9570FF));
+  color: #06121F;
+  transform: scale(1.07);
+  box-shadow: 0 8px 26px rgba(72, 229, 255, .35);
+}
+
+.estanteria__control:active { transform: scale(.97); }
+
+.estanteria__pistas {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: .78rem;
+  color: var(--texto-suave, #9AA8C7);
+}
+
+.pista {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+.pista svg { width: 16px; height: 16px; color: var(--cian, #48E5FF); }
+
+.pista kbd {
+  font: inherit;
+  font-size: .7rem;
+  font-weight: 700;
+  padding: .1rem .4rem;
+  border-radius: 5px;
+  border: 1px solid rgba(160, 200, 255, .25);
+  background: rgba(14, 20, 38, .8);
+  color: var(--texto, #F3F6FF);
+}
+
+/* Texto de apoyo para quien usa lector de pantalla */
+.estanteria__resumen {
+  margin-top: .9rem;
+  text-align: center;
+  font-size: .84rem;
+  color: var(--texto-suave, #9AA8C7);
+  max-width: 60ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Portada: encabezado de bienvenida sobre la estantería */
+.portada__presentacion {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.portada__titulo {
+  font-size: clamp(1.5rem, 3.4vw, 2.1rem);
+  font-weight: 850;
+  margin-bottom: .15rem;
+}
+.portada__titulo span {
+  background: linear-gradient(90deg, var(--cian, #48E5FF), var(--violeta, #9570FF));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.portada__descripcion { color: var(--texto-suave, #9AA8C7); font-size: .93rem; }
+
+/* ---------- 6. Responsive ---------- */
+@media (max-width: 1000px) {
+  .estanteria .libro { --ancho: 158px; --alto: 214px; }
+  .estanteria__nucleo { width: 176px; height: 176px; margin: -88px 0 0 -88px; }
+  .estanteria__corona { width: 300px; height: 300px; margin: -150px 0 0 -150px; }
+  .nucleo__titulo { font-size: .98rem; }
+}
+
+@media (max-width: 760px) {
+  .estanteria-zona { height: clamp(420px, 64vh, 540px); }
+  .estanteria .libro { --ancho: 124px; --alto: 169px; --grosor: 11px; }
+  .estanteria__nucleo { width: 148px; height: 148px; margin: -74px 0 0 -74px; top: 38%; }
+  .nucleo__icono { width: 38px; height: 38px; border-radius: 12px; }
+  .nucleo__icono svg { width: 20px; height: 20px; }
+  .nucleo__marca { font-size: .58rem; }
+  .nucleo__titulo { font-size: .88rem; }
+  .nucleo__seccion { font-size: .76rem; }
+  .nucleo__pista { display: none; }
+  .estanteria__corona { width: 236px; height: 236px; margin: -118px 0 0 -118px; top: 38%; }
+  .estanteria .libro__titulo { font-size: .8rem; }
+  .estanteria .libro__interior { padding: .7rem .55rem; }
+  .estanteria .libro__interior-titulo { font-size: .82rem; }
+  .estanteria .libro__interior-pie { font-size: .66rem; }
+  .estanteria__pistas { display: none; }
+}
+
+@media (max-width: 460px) {
+  .estanteria .libro { --ancho: 108px; --alto: 147px; --grosor: 9px; }
+  .estanteria-zona { height: 400px; }
+  .estanteria__nucleo { width: 122px; height: 122px; margin: -61px 0 0 -61px; }
+  .nucleo__titulo { font-size: .8rem; }
+  .estanteria .libro__marca, .estanteria .libro__codigo { display: none; }
+  .estanteria__control { width: 44px; height: 44px; }
+}
+
+/* En pantallas sin hover (móvil) la apertura se muestra al enfocar */
+@media (hover: none) {
+  .estanteria .libro:focus-visible .libro__tapa--delante { transform: translateZ(12px) rotateY(46deg); }
+}
+
+/* ---------- 7. Preferencias del sistema ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .estanteria__corona { animation: none; }
+  .estanteria .libro__escena,
+  .estanteria .libro__tapa--delante,
+  .estanteria .libro__tapa--atras,
+  .estanteria .libro__interior,
+  .estanteria .libro__sombra,
+  .nucleo__paso { transition: none !important; }
+  .estanteria .libro:hover .libro__escena { transform: none; }
+}
+
+@media (prefers-contrast: more) {
+  .estanteria__corona { display: none; }
+  .estanteria .libro__tapa--delante { border: 2px solid #9ADCFF; }
+  .estanteria__nucleo { border: 2px solid var(--cian, #48E5FF); }
+}
