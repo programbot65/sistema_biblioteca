@@ -1,4 +1,4 @@
-﻿# Biblioteca UEEA — sistema de gestión bibliográfica
+# Biblioteca UEEA — sistema de gestión bibliográfica
 
 Sistema web gratuito para organizar el catálogo de libros de la biblioteca
 institucional, facilitar la búsqueda y consulta de ejemplares y registrar
@@ -70,7 +70,7 @@ set PORT=3001 && npm run dev
 |---------|----------------|
 | `npm start` | Inicia el sistema. |
 | `npm run dev` | Inicia el sistema y reinicia solo al guardar cambios. |
-| `npm test` | Ejecuta las 109 pruebas automáticas del proyecto. |
+| `npm test` | Ejecuta las 111 pruebas automáticas del proyecto. |
 | `npm run db:migrate` | Crea la base de datos y las tablas (no borra datos). |
 | `npm run db:seed` | Carga los datos de prueba si el catálogo está vacío. |
 | `npm run db:reset` | **Borra** la base de datos y la vuelve a crear con datos de prueba. |
@@ -244,9 +244,11 @@ las superficies que estaban escritas a mano (tarjetas, campos, tablas, modal,
 insignias y la barra de desplazamiento). Las **portadas de los libros
 conservan sus colores vivos**, porque ese color es el de la categoría.
 
-La **estantería** es un escenario nocturno en los dos temas: en el claro se
-dibuja un charco de luz oscura en el que los libros siguen siendo lo que más
-llama la atención.
+La **estantería** cambia de aspecto con el tema: en el oscuro es un vacío
+nocturno y en el claro un **escenario pastel** con un charco de luz en el
+suelo. Además, en el tema claro los libros del fondo se muestran con más
+presencia (el motor de la estantería los coloca con más opacidad y menos
+desenfoque), para que no se vean desvaídos sobre el fondo claro.
 
 ### Encabezado
 
@@ -278,6 +280,11 @@ El formulario está dividido en **tres grupos**, en el orden en que se usa:
 1. **Libro** — escriba el título, el autor o el código y elija de la lista.
 2. **Estudiante** — nombre completo, cédula y curso.
 3. **Plazo** — días de préstamo y fecha. El sistema calcula solo la fecha límite.
+
+El formulario **avisa en todo momento de la fecha límite** que se va a
+calcular («Con 40 días, el libro se debe devolver el 30/11/2026»), y ese
+plazo es el que se guarda: no siempre son 7 días. El plazo puede ir de 1 a
+60 días.
 
 Presione **Registrar préstamo**. Para devolver un libro, presione
 **Devuelto** en la fila correspondiente y confirme la fecha; **Renovar**
@@ -381,7 +388,7 @@ Biblioteca/
 │           └── gestion.js
 └── tests/
     ├── api.test.js           35 pruebas de la API y las reglas de negocio
-    ├── interfaz.test.js      25 pruebas de la interfaz en el navegador
+    ├── interfaz.test.js      26 pruebas de la interfaz en el navegador
     ├── estanteria.test.js    31 pruebas de la navegación circular
     └── escritorio.test.js    18 pruebas del rediseño del panel
 ```
@@ -462,19 +469,19 @@ Las rutas de administración reciben la clave en la cabecera `x-admin-clave`.
 npm test
 ```
 
-Se ejecutan **109 pruebas** de forma automática:
+Se ejecutan **111 pruebas** de forma automática:
 
 - **35 de la API:** catálogo, búsqueda por cada campo, búsqueda inteligente con
   errores de escritura, validaciones del formulario, cálculo de la fecha límite,
   límites de préstamo, devolución, renovación, detección de atrasos, historial,
   estadísticas, recomendaciones y protección con clave.
-- **25 de la interfaz:** la página carga la estantería como inicio, sus libros
+- **26 de la interfaz:** la página carga la estantería como inicio, sus libros
   son las secciones del sistema, no hay barra lateral, los datos de un
-  estudiante conocido se completan solos, el formulario avisa donde está el
-  error, la navegación entre secciones, el buscador, la ficha con
-  recomendaciones, el registro de un préstamo completo desde el formulario, el
-  registro de una devolución, el acceso del encargado y la ausencia de errores
-  de JavaScript.
+  estudiante conocido se completan solos, el plazo de préstamo es el que
+  escribe el encargado, el formulario avisa donde está el error, la
+  navegación entre secciones, el buscador, la ficha con recomendaciones, el
+  registro de un préstamo completo desde el formulario, el registro de una
+  devolución, el acceso del encargado y la ausencia de errores de JavaScript.
 - **31 de la estantería:** la matemática del anillo, la profundidad de cada
   posición, la rueda con acumulación, el arrastre con inercia, el teclado, la
   apertura al elegir un libro, la limpieza del motor al salir de la sección y

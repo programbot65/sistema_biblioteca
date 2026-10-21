@@ -197,11 +197,27 @@ window.Navegacion = (() => {
     }
 
     // ---------- Pintado ----------
+    /**
+     * En el tema claro el fondo es mas claro: los libros del fondo se
+     * desvanecen demasiado y parecerian papel mojado. Ahi se les da mas
+     * presencia y menos desenfoque.
+     */
+    function ajustesDelTema() {
+      let claro = false;
+      try {
+        claro = document.documentElement.dataset.tema === 'claro';
+      } catch (error) { claro = false; }
+      return claro
+        ? { opacidad: 2.1, difuminado: 0.5 }
+        : { opacidad: 1, difuminado: 1 };
+    }
+
     function colocar() {
       const { medidas } = estado;
       if (!medidas) return;
 
       const limiteSalida = medidas.ancho / 2 + medidas.radioX;
+      const tema = ajustesDelTema();
 
       elementos.forEach((elemento, indice) => {
         const p = calcularPosicion(estado.anguloNormalizado + indice * paso, medidas);
@@ -214,9 +230,12 @@ window.Navegacion = (() => {
           `translate3d(${p.x.toFixed(2)}px, ${p.y.toFixed(2)}px, ${p.z.toFixed(2)}px) ` +
           `scale(${p.escala.toFixed(3)}) rotateZ(${p.giro.toFixed(2)}deg)`;
 
-        elemento.style.opacity = dentro ? p.opacidad.toFixed(3) : '0';
+        const opacidad = dentro ? Math.min(1, p.opacidad * tema.opacidad) : 0;
+        elemento.style.opacity = opacidad.toFixed(3);
         elemento.style.zIndex = String(dentro ? p.capa : 0);
-        elemento.style.filter = p.difuminado > 0.15 ? `blur(${p.difuminado.toFixed(2)}px)` : '';
+
+        const difuminado = p.difuminado * tema.difuminado;
+        elemento.style.filter = difuminado > 0.15 ? `blur(${difuminado.toFixed(2)}px)` : '';
         elemento.style.setProperty('--frente', p.frente.toFixed(3));
       });
 
@@ -482,11 +501,17 @@ window.Navegacion = (() => {
       if (alRedimensionar) alRedimensionar(estado.medidas);
     }
 
+    /** Al cambiar el tema, los libros se vuelven a colocar con el nuevo ajuste. */
+    function alCambiarTema() {
+      colocar();
+    }
+
     const observador = typeof ResizeObserver === 'function'
       ? new ResizeObserver(alCambiarTamano)
       : null;
     if (observador) observador.observe(contenedor);
     window.addEventListener('resize', alCambiarTamano);
+    document.addEventListener('tema-cambiado', alCambiarTema);
 
     // ---------- Arranque ----------
     calcularMedidas();
@@ -533,6 +558,7 @@ window.Navegacion = (() => {
         window.removeEventListener('pointerup', alSoltarPuntero);
         window.removeEventListener('pointercancel', alSoltarPuntero);
         window.removeEventListener('resize', alCambiarTamano);
+        document.removeEventListener('tema-cambiado', alCambiarTema);
       }
     };
   }

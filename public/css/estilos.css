@@ -497,6 +497,19 @@ a { color: var(--cian); }
   letter-spacing: .16em; text-transform: uppercase; color: var(--texto-tenue);
 }
 .formulario-grupo__nota { margin: 0; font-size: .78rem; color: var(--texto-tenue); }
+
+/* La fecha limite que se va a calcular, a la vista. */
+.formulario-limite {
+  margin: 0;
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--cian);
+  padding: .35rem .6rem;
+  border-radius: 999px;
+  align-self: start;
+  background: var(--cian-suave);
+  border: 1px solid rgba(72, 229, 255, .28);
+}
 .formulario-grupo__campos {
   display: grid; gap: .7rem;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));

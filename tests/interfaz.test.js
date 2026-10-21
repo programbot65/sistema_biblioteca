@@ -384,6 +384,55 @@ test('El formulario de prestamos registra un prestamo completo', async () => {
   assert.equal(prestamos[0].estudiante_nombre, 'Estudiante Interfaz');
 });
 
+test('El plazo de préstamo es el que escribe el encargado', async () => {
+  const documento = dom.window.document;
+
+  // Se avisa de la fecha limite que se va a calcular.
+  const dias = documento.querySelector('[name="dias_prestamo"]');
+  dias.value = '40';
+  dias.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+
+  const aviso = documento.querySelector('.formulario-limite');
+  assert.ok(aviso, 'debe avisar de la fecha limite');
+  assert.match(aviso.textContent, /40 días/);
+  assert.match(aviso.textContent, /\d{2}\/\d{2}\/\d{4}/);
+
+  // Se registra un prestamo con ese plazo.
+  documento.querySelector('[name="nombre"]').value = 'Estudiante Plazo';
+  documento.querySelector('[name="cedula"]').value = '0922233344';
+  documento.querySelector('[name="curso"]').value = '10.º de EGB';
+
+  const entradaLibro = documento.querySelector('[name="libro_busqueda"]');
+  entradaLibro.value = 'ADM-001';
+  await dom.window.Vistas.prestamos.buscarLibros('ADM-001');
+
+  await esperar(
+    (doc) => doc.querySelectorAll('.resultados-sugeridos button').length > 0,
+    'las sugerencias de libros'
+  );
+
+  documento
+    .querySelector('.resultados-sugeridos button')
+    .dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+
+  documento
+    .querySelector('form button[type="submit"]')
+    .dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
+
+  await esperar(
+    (doc) => doc.body.textContent.includes('Contabilidad'),
+    'el prestamo con 40 dias'
+  );
+
+  // El servidor guardo la fecha limite correcta: 40 dias, no 7.
+  const respuesta = await fetch(`${base}/api/prestamos?cedula=0922233344`);
+  const { prestamos } = await respuesta.json();
+
+  assert.equal(prestamos.length, 1);
+  assert.equal(prestamos[0].dias_restantes, 40);
+  assert.equal(prestamos[0].fecha_limite, '2026-11-30');
+});
+
 test('El formulario muestra el error cuando el prestamo no es valido', async () => {
   const documento = dom.window.document;
 
@@ -417,7 +466,7 @@ test('El formulario muestra el error cuando el prestamo no es valido', async () 
 test('Desde la lista se registra la devolucion de un libro', async () => {
   const documento = dom.window.document;
 
-  await esperar((doc) => doc.querySelectorAll('tbody tr').length === 3, 'los tres préstamos activos');
+  await esperar((doc) => doc.querySelectorAll('tbody tr').length === 4, 'los préstamos activos');
 
   const botonDevolver = Array.from(documento.querySelectorAll('button'))
     .find((boton) => boton.textContent === 'Devuelto');
@@ -439,7 +488,7 @@ test('Desde la lista se registra la devolucion de un libro', async () => {
     .dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
 
   await esperar(
-    (doc) => doc.querySelectorAll('tbody tr').length === 2,
+    (doc) => doc.querySelectorAll('tbody tr').length === 3,
     'la lista de préstamos activos tras la devolución'
   );
 

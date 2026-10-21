@@ -143,12 +143,20 @@ Vistas.prestamos = {
         this.campos.fecha = UI.campo({
           etiqueta: 'Fecha del préstamo', nombre: 'fecha_prestamo', tipo: 'date', valor: UI.hoy()
         })
-      ])
+      ]),
+      this.notaLimite = crear('p', { clase: 'formulario-limite' })
     ]);
 
     const entradaDias = this.campos.dias.querySelector('input');
     entradaDias.min = '1';
     entradaDias.max = '60';
+
+    // Se avisa en todo momento de cuando se debe devolver el libro.
+    const avisarLimite = () => this.pintarLimite();
+    entradaDias.addEventListener('input', avisarLimite);
+    this.campos.fecha.querySelector('input').addEventListener('input', avisarLimite);
+    this.campos.fecha.querySelector('input').addEventListener('change', avisarLimite);
+    this.pintarLimite();
 
     this.formulario = crear('form', {
       clase: 'formulario-prestamo',
@@ -363,6 +371,18 @@ Vistas.prestamos = {
     }
   },
 
+  /** Escribe cuando se debe devolver el libro con los días indicados. */
+  pintarLimite() {
+    if (!this.notaLimite) return;
+
+    const dias = Number(this.valor('dias')) || 7;
+    const fecha = this.valor('fecha') || UI.hoy();
+    const limite = UI.sumarDias(fecha, dias);
+
+    this.notaLimite.textContent =
+      `Con ${dias} ${dias === 1 ? 'día' : 'días'}, el libro se debe devolver el ${UI.fecha(limite)}.`;
+  },
+
   /** Lee el valor escrito en uno de los campos del formulario. */
   valor(campo) {
     const entrada = this.campos[campo] && this.campos[campo].querySelector('input, select, textarea');
@@ -387,6 +407,7 @@ Vistas.prestamos = {
     UI.marcarErrores(this.formulario, []);
     this.campos.fecha.querySelector('input').value = UI.hoy();
     this.campos.dias.querySelector('input').value = 7;
+    this.pintarLimite();
 
     if (mantenerEstudiante && cedula) {
       this.campos.nombre.querySelector('input').value = nombre;
@@ -408,8 +429,8 @@ Vistas.prestamos = {
       nombre: this.valor('nombre'),
       cedula: this.valor('cedula'),
       curso: this.valor('curso'),
-      fecha_prestamo: this.valor('fecha_prestamo') || UI.hoy(),
-      dias_prestamo: Number(this.valor('dias_prestamo')) || 7
+      fecha_prestamo: this.valor('fecha') || UI.hoy(),
+      dias_prestamo: Number(this.valor('dias')) || 7
     };
 
     boton.disabled = true;

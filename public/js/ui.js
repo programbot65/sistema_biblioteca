@@ -307,6 +307,12 @@ window.UI = (() => {
       } catch (error) {
         // Sin almacenamiento, el tema solo dura esta visita.
       }
+      // Quien este escuchando (la estanteria) vuelve a pintarse.
+      try {
+        document.dispatchEvent(new CustomEvent('tema-cambiado', { detail: { tema: valor } }));
+      } catch (error) {
+        // En entornos antiguos sin CustomEvent no pasa nada.
+      }
       return valor;
     };
     return {

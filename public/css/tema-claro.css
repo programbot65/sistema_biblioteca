@@ -209,20 +209,59 @@
 [data-tema="claro"] div.portada--t7 { background: linear-gradient(155deg, #BEF264 0%, #40510F 58%, #6B8A22 100%); }
 
 /* ---------- Estantería ---------- */
-/* La estantería es un escenario nocturno: en el tema claro se dibuja un
-   charco de luz oscura en el que los libros siguen siendo lo que llama la
-   atención. */
+/* En el tema claro la estantería es un escenario pastel: un suelo claro
+   con un charco de luz y las orbitas más marcadas. El motor de la estantería
+   da más presencia a los libros del fondo para que no se vean desvaídos. */
 [data-tema="claro"] .estanteria-zona {
   background:
-    radial-gradient(36% 24% at 50% 74%, rgba(72, 229, 255, .2), transparent 70%),
-    radial-gradient(30% 20% at 50% 76%, rgba(149, 112, 255, .18), transparent 72%),
-    radial-gradient(82% 70% at 50% 48%, rgba(9, 14, 34, .95) 40%, rgba(9, 14, 34, .8) 62%, rgba(9, 14, 34, 0) 88%);
+    radial-gradient(42% 24% at 50% 76%, rgba(11, 147, 184, .18), transparent 70%),
+    radial-gradient(36% 20% at 50% 78%, rgba(111, 83, 232, .15), transparent 72%),
+    radial-gradient(58% 40% at 50% 80%, rgba(255, 255, 255, .95) 12%, rgba(255, 255, 255, 0) 72%);
 }
 
+[data-tema="claro"] .estanteria__corona {
+  border-color: rgba(11, 147, 184, .22);
+  box-shadow: 0 0 60px rgba(11, 147, 184, .08), inset 0 0 60px rgba(111, 83, 232, .06);
+}
+
+[data-tema="claro"] .estanteria__corona::before { border-color: rgba(111, 83, 232, .18); }
+
+/* El nucleo pasa a ser un cristal claro con el nombre encima. */
+[data-tema="claro"] .estanteria__nucleo {
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .99), rgba(240, 244, 253, .95) 58%, rgba(226, 233, 249, .93) 100%);
+  border-color: rgba(11, 147, 184, .28);
+  box-shadow:
+    0 0 34px rgba(11, 147, 184, .12),
+    0 14px 34px rgba(45, 66, 130, .16),
+    inset 0 1px 0 rgba(255, 255, 255, .95);
+}
+
+[data-tema="claro"] .nucleo__seccion {
+  color: var(--cian);
+  text-shadow: none;
+}
+
+[data-tema="claro"] .nucleo__paso { background: rgba(120, 135, 170, .4); }
+[data-tema="claro"] .nucleo__paso.activo { background: var(--cian); }
+
 [data-tema="claro"] .estanteria__control {
-  background: rgba(255, 255, 255, .1);
-  border-color: rgba(160, 200, 255, .22);
-  color: #C9D6F0;
+  background: rgba(255, 255, 255, .9);
+  border-color: rgba(96, 116, 172, .28);
+  color: var(--texto-suave);
+  box-shadow: 0 4px 14px rgba(45, 66, 130, .1);
+}
+
+[data-tema="claro"] .estanteria__control:hover {
+  color: var(--cian);
+  border-color: rgba(11, 147, 184, .5);
+  background: #fff;
+}
+
+/* La sombra del libro, en vez de un halo, sirve de contacto con el suelo. */
+[data-tema="claro"] .estanteria .libro__sombra {
+  background: radial-gradient(closest-side, rgba(11, 147, 184, .3), rgba(11, 147, 184, 0) 72%);
+  filter: blur(7px);
 }
 
 /* ---------- Botones ---------- */
