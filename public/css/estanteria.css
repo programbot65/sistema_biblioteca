@@ -331,7 +331,7 @@
     inset 0 0 0 1px rgba(255, 255, 255, .22),
     inset -14px 0 26px rgba(0, 0, 0, .3),
     0 18px 40px rgba(0, 0, 0, .55),
-    0 0 26px rgba(72, 229, 255, .07);
+    0 0 10px rgba(72, 229, 255, .1);
   overflow: hidden;
 }
 
@@ -403,7 +403,7 @@
     inset -14px 0 26px rgba(0, 0, 0, .3),
     0 24px 52px rgba(0, 0, 0, .6),
     0 0 0 2px rgba(72, 229, 255, .55),
-    0 0 30px rgba(72, 229, 255, .25);
+    0 0 12px rgba(72, 229, 255, .22);
 }
 
 .estanteria .libro:focus-visible .libro__tapa--delante {

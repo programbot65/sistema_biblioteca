@@ -283,12 +283,35 @@
     inset -14px 0 26px rgba(0, 0, 0, .3),
     0 24px 52px rgba(0, 0, 0, .6),
     0 0 0 2px rgba(11, 147, 184, .5),
-    0 0 30px rgba(11, 147, 184, .2);
+    0 0 12px rgba(11, 147, 184, .2);
 }
 
 [data-tema="claro"] .estanteria .libro:hover .libro__lomo,
 [data-tema="claro"] .estanteria .libro:focus-visible .libro__lomo {
   box-shadow: inset -2px 0 5px rgba(0, 0, 0, .3), 0 0 16px rgba(11, 147, 184, .38);
+}
+
+/* ---------- El libro que se abre ---------- */
+/* Al abrir un libro, su interior tambien pasa al tema claro: si no, se
+   queda el interior oscuro del modo noche sobre la pagina clara. */
+[data-tema="claro"] .estanteria .libro__interior {
+  background: linear-gradient(160deg, #FFFFFF, #EDF1FA);
+  border-color: rgba(11, 147, 184, .32);
+  box-shadow: inset 0 0 24px rgba(11, 147, 184, .08);
+}
+
+[data-tema="claro"] .estanteria .libro__interior-titulo { color: var(--texto); }
+[data-tema="claro"] .estanteria .libro__interior-pie { color: var(--texto-suave); }
+
+[data-tema="claro"] .estanteria .libro__interior-lineas {
+  background: repeating-linear-gradient(0deg,
+    rgba(11, 147, 184, .18) 0 2px,
+    transparent 2px 7px);
+}
+
+[data-tema="claro"] .estanteria .libro__interior-icono {
+  color: var(--cian);
+  filter: drop-shadow(0 0 8px rgba(11, 147, 184, .45));
 }
 
 [data-tema="claro"] .estanteria__control {
