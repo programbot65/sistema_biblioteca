@@ -1,0 +1,249 @@
+/* ==========================================================================
+   Tema claro pastel
+   --------------------------------------------------------------------------
+   El sistema es oscuro por defecto. Con `[data-tema="claro"]` en <html> se
+   cambian las variables de color y las superficies que estaban escritas a
+   mano, de modo que todo el sistema se vea igual de limpio con luz.
+   La preferencia se guarda en `biblio_tema` de este navegador.
+   ========================================================================== */
+
+[data-tema="claro"] {
+  --fondo: #EDF1FA;
+  --fondo-2: #F7F9FD;
+  --superficie: #FFFFFF;
+  --cristal: rgba(255, 255, 255, .8);
+  --cristal-fuerte: rgba(255, 255, 255, .96);
+  --borde-cristal: rgba(96, 116, 172, .2);
+  --borde-luz: rgba(255, 255, 255, .8);
+  --cian: #0B93B8;
+  --cian-suave: rgba(11, 147, 184, .12);
+  --violeta: #6F53E8;
+  --violeta-suave: rgba(111, 83, 232, .12);
+  --fucsia: #D9449F;
+  --fucsia-suave: rgba(217, 68, 159, .12);
+  --ambar: #C2850B;
+  --ambar-suave: rgba(194, 133, 11, .14);
+  --esmeralda: #10996E;
+  --esmeralda-suave: rgba(16, 153, 110, .12);
+  --naranja: #DB6B1B;
+  --naranja-suave: rgba(219, 107, 27, .12);
+  --texto: #1C2540;
+  --texto-suave: #55607E;
+  --texto-tenue: #8A93AC;
+  --error: #DC3F58;
+  --error-suave: rgba(220, 63, 88, .12);
+  --sombra: 0 2px 6px rgba(35, 52, 100, .05), 0 12px 32px rgba(45, 66, 130, .1);
+  --sombra-alta: 0 8px 20px rgba(35, 52, 100, .08), 0 24px 60px rgba(45, 66, 130, .16);
+  --desenfoque: saturate(140%) blur(14px);
+}
+
+/* ---------- Fondo ---------- */
+[data-tema="claro"] body {
+  background:
+    radial-gradient(50% 36% at 10% -6%, rgba(11, 147, 184, .12), transparent 62%),
+    radial-gradient(46% 40% at 88% 106%, rgba(217, 68, 159, .1), transparent 64%),
+    radial-gradient(34% 26% at 74% 8%, rgba(111, 83, 232, .09), transparent 62%),
+    linear-gradient(168deg, #F4F6FC 0%, #EDF1FA 45%, #E7ECF7 100%);
+  background-color: var(--fondo);
+}
+
+[data-tema="claro"] body::before {
+  background:
+    radial-gradient(rgba(11, 147, 184, .3) 1px, transparent 1.5px),
+    radial-gradient(rgba(217, 68, 159, .25) 1px, transparent 1.5px),
+    linear-gradient(rgba(120, 140, 200, .12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 140, 200, .12) 1px, transparent 1px);
+  opacity: .5;
+}
+
+[data-tema="claro"] body::after {
+  background-image:
+    radial-gradient(rgba(11, 147, 184, .35) 1px, transparent 1.5px),
+    radial-gradient(rgba(111, 83, 232, .28) 1px, transparent 1.5px);
+  opacity: .35;
+}
+
+/* ---------- Barra de desplazamiento ---------- */
+[data-tema="claro"] ::-webkit-scrollbar-track { background: #E4E9F5; }
+[data-tema="claro"] ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #B6C4E4, #C9B9EC);
+  border: 2px solid #E4E9F5;
+}
+
+/* ---------- Encabezado ---------- */
+[data-tema="claro"] .encabezado {
+  background: linear-gradient(180deg, rgba(255, 255, 255, .9), rgba(255, 255, 255, .72));
+  border-bottom-color: rgba(96, 116, 172, .16);
+  box-shadow: 0 10px 30px rgba(45, 66, 130, .07);
+}
+
+[data-tema="claro"] .encabezado__buscador { background: rgba(255, 255, 255, .8); }
+[data-tema="claro"] .encabezado__buscador input { color: var(--texto); }
+[data-tema="claro"] .encabezado__buscador input::placeholder { color: var(--texto-tenue); }
+
+/* El titulo es un degradado: en claro no puede empezar en blanco o las
+   primeras letras se verian sobre el fondo. */
+[data-tema="claro"] .encabezado__titulo {
+  background: linear-gradient(90deg, #27356B 12%, var(--cian) 58%, var(--fucsia));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* ---------- Superficies ---------- */
+[data-tema="claro"] .tarjeta {
+  background: linear-gradient(165deg, rgba(255, 255, 255, .94), rgba(255, 255, 255, .84));
+  border-color: rgba(96, 116, 172, .18);
+  box-shadow: var(--sombra);
+}
+
+[data-tema="claro"] .estacion {
+  background: linear-gradient(165deg, rgba(255, 255, 255, .92), rgba(255, 255, 255, .82));
+  border-color: rgba(96, 116, 172, .18);
+  box-shadow: var(--sombra);
+}
+
+[data-tema="claro"] .ficha {
+  background: linear-gradient(150deg, rgba(255, 255, 255, .96), rgba(246, 248, 253, .9));
+  box-shadow: 0 4px 16px rgba(45, 66, 130, .07), inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+
+[data-tema="claro"] .libro,
+[data-tema="claro"] .destacado-item,
+[data-tema="claro"] .usuario,
+[data-tema="claro"] .indicador,
+[data-tema="claro"] .carne {
+  background: linear-gradient(170deg, rgba(255, 255, 255, .96), rgba(244, 247, 253, .92));
+  box-shadow: 0 4px 16px rgba(45, 66, 130, .08), inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+
+[data-tema="claro"] .libro::before,
+[data-tema="claro"] .destacado-item::before { opacity: .32; }
+
+[data-tema="claro"] .vacio {
+  background: linear-gradient(165deg, rgba(255, 255, 255, .7), rgba(244, 247, 253, .7));
+  border-color: rgba(96, 116, 172, .3);
+}
+
+[data-tema="claro"] .tabla-envoltura {
+  background: linear-gradient(165deg, rgba(255, 255, 255, .92), rgba(244, 247, 253, .88));
+  border-color: rgba(96, 116, 172, .18);
+}
+
+[data-tema="claro"] th { background: rgba(238, 242, 250, .95); color: var(--texto-suave); }
+[data-tema="claro"] tbody tr:hover { background: rgba(11, 147, 184, .07); }
+
+/* ---------- Formularios ---------- */
+[data-tema="claro"] .campo input,
+[data-tema="claro"] .campo select,
+[data-tema="claro"] .campo textarea,
+[data-tema="claro"] .buscador__campo input,
+[data-tema="claro"] .filtros select,
+[data-tema="claro"] .filtros input,
+[data-tema="claro"] .vista-controles__grupo {
+  background: #FFFFFF;
+  border-color: rgba(96, 116, 172, .26);
+  box-shadow: inset 0 1px 3px rgba(45, 66, 130, .05);
+  color: var(--texto);
+}
+
+[data-tema="claro"] .campo select option { background: #FFFFFF; color: var(--texto); }
+[data-tema="claro"] .campo input:focus,
+[data-tema="claro"] .campo select:focus,
+[data-tema="claro"] .campo textarea:focus { background: #FFFFFF; }
+
+[data-tema="claro"] .filtros-avanzados,
+[data-tema="claro"] .datos-opcionales { background: rgba(255, 255, 255, .6); }
+
+[data-tema="claro"] .campo input::placeholder,
+[data-tema="claro"] .buscador__campo input::placeholder { color: var(--texto-tenue); }
+
+/* ---------- Piezas del resumen ---------- */
+[data-tema="claro"] .cifras {
+  background: rgba(255, 255, 255, .74);
+  border-color: rgba(96, 116, 172, .16);
+}
+
+[data-tema="claro"] .cifra:hover,
+[data-tema="claro"] .cifra:focus-visible { background: rgba(11, 147, 184, .1); }
+
+[data-tema="claro"] .seccion,
+[data-tema="claro"] .pendiente,
+[data-tema="claro"] .sugerencia {
+  background: rgba(255, 255, 255, .8);
+  border-color: rgba(96, 116, 172, .16);
+}
+
+[data-tema="claro"] .seccion:hover,
+[data-tema="claro"] .pendiente:hover,
+[data-tema="claro"] .sugerencia:hover { background: rgba(255, 255, 255, .98); }
+
+/* ---------- Modal y avisos ---------- */
+[data-tema="claro"] .modal__caja {
+  background: linear-gradient(170deg, rgba(255, 255, 255, .99), rgba(247, 249, 253, .98));
+  border-color: rgba(96, 116, 172, .2);
+}
+
+[data-tema="claro"] .modal__cabecera {
+  background: rgba(243, 246, 252, .95);
+  border-bottom-color: rgba(96, 116, 172, .16);
+}
+
+[data-tema="claro"] .modal__cerrar:hover { color: var(--error); }
+[data-tema="claro"] .modal__fondo { background: rgba(40, 52, 88, .38); }
+
+[data-tema="claro"] .aviso {
+  background: linear-gradient(170deg, rgba(255, 255, 255, .98), rgba(247, 249, 253, .96));
+  border-color: rgba(96, 116, 172, .2);
+  box-shadow: var(--sombra-alta);
+}
+
+/* ---------- Portadas de libro ---------- */
+/* Las portadas conservan sus colores vivos: son el color de la categoría. */
+[data-tema="claro"] div.portada--t0 { background: linear-gradient(155deg, #1E9CC4 0%, #0E3F5C 58%, #166A86 100%); }
+[data-tema="claro"] div.portada--t1 { background: linear-gradient(155deg, #8A6FF0 0%, #3A2A75 58%, #54409E 100%); }
+[data-tema="claro"] div.portada--t2 { background: linear-gradient(155deg, #F472D6 0%, #6A1C55 58%, #9C2C74 100%); }
+[data-tema="claro"] div.portada--t3 { background: linear-gradient(155deg, #FBBF24 0%, #6B4A0C 58%, #A5761A 100%); }
+[data-tema="claro"] div.portada--t4 { background: linear-gradient(155deg, #34D399 0%, #14503E 58%, #217A5F 100%); }
+[data-tema="claro"] div.portada--t5 { background: linear-gradient(155deg, #60A5FA 0%, #1D3E70 58%, #33609E 100%); }
+[data-tema="claro"] div.portada--t6 { background: linear-gradient(155deg, #FB923C 0%, #6A3310 58%, #9C4F1A 100%); }
+[data-tema="claro"] div.portada--t7 { background: linear-gradient(155deg, #BEF264 0%, #40510F 58%, #6B8A22 100%); }
+
+/* ---------- Estantería ---------- */
+/* La estantería es un escenario nocturno: en el tema claro se dibuja un
+   charco de luz oscura en el que los libros siguen siendo lo que llama la
+   atención. */
+[data-tema="claro"] .estanteria-zona {
+  background:
+    radial-gradient(36% 24% at 50% 74%, rgba(72, 229, 255, .2), transparent 70%),
+    radial-gradient(30% 20% at 50% 76%, rgba(149, 112, 255, .18), transparent 72%),
+    radial-gradient(82% 70% at 50% 48%, rgba(9, 14, 34, .95) 40%, rgba(9, 14, 34, .8) 62%, rgba(9, 14, 34, 0) 88%);
+}
+
+[data-tema="claro"] .estanteria__control {
+  background: rgba(255, 255, 255, .1);
+  border-color: rgba(160, 200, 255, .22);
+  color: #C9D6F0;
+}
+
+/* ---------- Botones ---------- */
+[data-tema="claro"] .boton--secundario {
+  background: rgba(255, 255, 255, .82);
+  border-color: rgba(96, 116, 172, .24);
+  color: var(--texto);
+}
+
+[data-tema="claro"] .skip-link { color: #FFFFFF; }
+
+/* ---------- Elementos con texto sobre fondo de color ---------- */
+/* Los colores claros de las insignias no se leen sobre fondo claro. */
+[data-tema="claro"] .insignia--prestado { color: var(--violeta); border-color: rgba(111, 83, 232, .4); }
+[data-tema="claro"] .insignia--categoria { color: var(--fucsia); border-color: rgba(217, 68, 159, .4); }
+[data-tema="claro"] .insignia--devuelto { border-color: rgba(120, 135, 170, .35); }
+[data-tema="claro"] .insignia--disponible { border-color: rgba(16, 153, 110, .4); }
+[data-tema="claro"] .insignia--vigente { border-color: rgba(11, 147, 184, .4); }
+[data-tema="claro"] .insignia--por_vencer { border-color: rgba(194, 133, 11, .4); }
+[data-tema="claro"] .insignia--atrasado,
+[data-tema="claro"] .insignia--agotado { border-color: rgba(220, 63, 88, .4); }
+
+[data-tema="claro"] .estado { border-color: rgba(16, 153, 110, .35); }
+[data-tema="claro"] .estado--alerta { border-color: rgba(194, 133, 11, .4); }

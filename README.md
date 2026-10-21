@@ -233,6 +233,21 @@ motas de luz a la deriva. Todo está fijo, detrás del contenido y no
 captura clics. Los paneles son de cristal translúcido con desenfoque
 (`backdrop-filter`, con alternativa opaca si el navegador no lo soporta).
 
+### Tema claro pastel
+
+El botón de **sol/luna** del encabezado cambia entre el tema oscuro (el de
+noche, por defecto) y el **tema claro pastel**. La preferencia se guarda en
+`biblio_tema` de este navegador, así que se recuerda entre visitas.
+
+El tema claro vive en `css/tema-claro.css`: cambia las variables de color y
+las superficies que estaban escritas a mano (tarjetas, campos, tablas, modal,
+insignias y la barra de desplazamiento). Las **portadas de los libros
+conservan sus colores vivos**, porque ese color es el de la categoría.
+
+La **estantería** es un escenario nocturno en los dos temas: en el claro se
+dibuja un charco de luz oscura en el que los libros siguen siendo lo que más
+llama la atención.
+
 ### Encabezado
 
 Sin fila de botones. Solo la identidad, el estado del sistema (punto de luz que
@@ -345,7 +360,8 @@ Biblioteca/
 │   ├── css/
 │   │   ├── estilos.css       Estilo general del sistema
 │   │   ├── estanteria.css    Navegación circular de libros
-│   │   └── biblioteca.css    Las piezas del escritorio
+│   │   ├── biblioteca.css    Las piezas del escritorio
+│   │   └── tema-claro.css    El tema claro pastel
 │   └── js/
 │       ├── api.js            Cliente de la API
 │       ├── iconos.js         Catalogo de iconos SVG

@@ -494,6 +494,28 @@ test('El botón de tema alterna entre claro y oscuro', () => {
   assert.equal(documento.documentElement.dataset.tema, inicial);
 });
 
+test('El tema claro está definido y se recuerda entre visitas', () => {
+  const documento = dom.window.document;
+
+  // La hoja de estilos del tema claro tiene que estar cargada.
+  const hojas = Array.from(documento.querySelectorAll('link[rel="stylesheet"]'))
+    .map((hoja) => hoja.getAttribute('href'));
+  assert.ok(hojas.includes('/css/tema-claro.css'), 'falta la hoja del tema claro');
+
+  // Al cambiar el tema, la preferencia queda guardada en el navegador.
+  const boton = documento.querySelector('#tema-boton');
+  const inicial = documento.documentElement.dataset.tema;
+
+  boton.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+  const cambiado = documento.documentElement.dataset.tema;
+  assert.notEqual(cambiado, inicial);
+  assert.equal(dom.window.localStorage.getItem('biblio_tema'), cambiado);
+
+  // Y al volver a pulsarlo se recupera el tema anterior.
+  boton.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+  assert.equal(documento.documentElement.dataset.tema, inicial);
+});
+
 test('No hay menú lateral: la estantería es el menú', () => {
   const documento = dom.window.document;
   assert.equal(documento.querySelectorAll('.sidebar').length, 0);
