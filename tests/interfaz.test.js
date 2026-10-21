@@ -536,6 +536,27 @@ test('La biblioteca digital muestra los libros con su estado y el botón de leer
   assert.ok(documento.querySelectorAll('.filtros select').length >= 2);
 });
 
+test('La biblioteca digital muestra primero los libros prestados', async () => {
+  dom.window.location.hash = '#/biblioteca';
+
+  await esperar((doc) => doc.querySelectorAll('.digital__item').length > 0, 'los libros digitales');
+
+  const documento = dom.window.document;
+  const prestamos = Array.from(documento.querySelectorAll('.prestamo-activo'));
+
+  assert.ok(prestamos.length > 0, 'debe listar los prestamos activos');
+
+  for (const prestamo of prestamos) {
+    assert.ok(prestamo.querySelector('.prestamo-activo__titulo').textContent.trim());
+    // Se conservan los datos del estudiante, las fechas y el estado.
+    const detalle = prestamo.querySelector('.prestamo-activo__detalle').textContent;
+    assert.match(detalle, /préstamo \d{2}\/\d{2}\/\d{4}/);
+    assert.match(detalle, /límite \d{2}\/\d{2}\/\d{4}/);
+    assert.ok(prestamo.querySelector('.insignia').textContent.trim());
+    assert.ok(prestamo.querySelector('button'), 'debe poder leerse');
+  }
+});
+
 test('Un libro sin archivo digital avisa de que su contenido no está disponible', async () => {
   dom.window.location.hash = '#/biblioteca';
 

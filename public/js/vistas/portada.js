@@ -34,8 +34,8 @@ Vistas.inicio = {
   secciones: [
     {
       ruta: 'catalogo',
-      etiqueta: 'Catalogo',
-      titulo: 'CATALOGO',
+      etiqueta: 'Catalogos',
+      titulo: 'CATALOGOS',
       descripcion: 'Buscar y consultar los libros del catalogo',
       icono: 'catalogo',
       tono: 'violeta'
@@ -44,7 +44,7 @@ Vistas.inicio = {
       ruta: 'biblioteca',
       etiqueta: 'Biblioteca',
       titulo: 'BIBLIOTECA',
-      descripcion: 'Leer los libros de la biblioteca desde aqui',
+      descripcion: 'Los libros que tienes prestados y los que puedes leer',
       icono: 'biblioteca',
       tono: 'azul'
     },

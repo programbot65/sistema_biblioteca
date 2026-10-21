@@ -184,7 +184,7 @@
 }
 
 [data-tema="claro"] .modal__cabecera {
-  background: rgba(243, 246, 252, .95);
+  background: #F2F5FB;
   border-bottom-color: rgba(96, 116, 172, .16);
 }
 
@@ -208,10 +208,20 @@
 [data-tema="claro"] div.portada--t6 { background: linear-gradient(155deg, #FB923C 0%, #6A3310 58%, #9C4F1A 100%); }
 [data-tema="claro"] div.portada--t7 { background: linear-gradient(155deg, #BEF264 0%, #40510F 58%, #6B8A22 100%); }
 
+/* ---------- La ficha del libro (modal) ---------- */
+/* El halo de color se sale de la ficha y, al recortarse contra el borde
+   del modal, deja una franja azul. En claro se queda dentro. */
+[data-tema="claro"] .ficha::before { inset: 0; opacity: .3; }
+
+[data-tema="claro"] .ficha__portada {
+  border-color: rgba(96, 116, 172, .22);
+  box-shadow: 0 12px 30px rgba(45, 66, 130, .16);
+}
+
 /* ---------- Estantería ---------- */
-/* En el tema claro la estantería es un escenario pastel: un suelo claro
-   con un charco de luz y las orbitas más marcadas. El motor de la estantería
-   da más presencia a los libros del fondo para que no se vean desvaídos. */
+/* En el tema claro el mundo es un escenario pastel: los acentos azules del
+   modo oscuro saturan sobre ese fondo. Se sustituyen por el cian del tema
+   claro y bajan de intensidad, sin cambiar el diseño. */
 [data-tema="claro"] .estanteria-zona {
   background:
     radial-gradient(42% 24% at 50% 76%, rgba(11, 147, 184, .18), transparent 70%),
@@ -244,6 +254,42 @@
 
 [data-tema="claro"] .nucleo__paso { background: rgba(120, 135, 170, .4); }
 [data-tema="claro"] .nucleo__paso.activo { background: var(--cian); }
+
+/* Los libros se encienden con el cian suave del tema, no con el azul
+   brillante del tema oscuro. */
+[data-tema="claro"] .estanteria .libro__sombra {
+  background: radial-gradient(closest-side, rgba(11, 147, 184, .28), rgba(11, 147, 184, 0) 72%);
+}
+
+[data-tema="claro"] .estanteria .libro__interior {
+  border-color: rgba(11, 147, 184, .3);
+  box-shadow: inset 0 0 24px rgba(11, 147, 184, .08);
+}
+
+[data-tema="claro"] .estanteria .libro__interior-lineas {
+  background: repeating-linear-gradient(0deg,
+    rgba(11, 147, 184, .18) 0 2px,
+    transparent 2px 7px);
+}
+
+[data-tema="claro"] .estanteria .libro__interior-icono {
+  color: var(--cian);
+  filter: drop-shadow(0 0 8px rgba(11, 147, 184, .45));
+}
+
+[data-tema="claro"] .estanteria .libro.es-frente .libro__tapa--delante {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .32),
+    inset -14px 0 26px rgba(0, 0, 0, .3),
+    0 24px 52px rgba(0, 0, 0, .6),
+    0 0 0 2px rgba(11, 147, 184, .5),
+    0 0 30px rgba(11, 147, 184, .2);
+}
+
+[data-tema="claro"] .estanteria .libro:hover .libro__lomo,
+[data-tema="claro"] .estanteria .libro:focus-visible .libro__lomo {
+  box-shadow: inset -2px 0 5px rgba(0, 0, 0, .3), 0 0 16px rgba(11, 147, 184, .38);
+}
 
 [data-tema="claro"] .estanteria__control {
   background: rgba(255, 255, 255, .9);

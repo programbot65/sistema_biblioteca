@@ -569,15 +569,15 @@ a { color: var(--cian); }
   to { opacity: 1; transform: none; }
 }
 .modal__caja::before {
-  content: ""; position: sticky; top: 0; display: block; height: 3px; z-index: 2;
+  content: ""; position: sticky; top: 0; display: block; height: 3px; z-index: 6;
   background: linear-gradient(90deg, var(--cian), var(--violeta), var(--fucsia));
   border-radius: 22px 22px 0 0;
 }
 .modal__cabecera {
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
   padding: .95rem 1.1rem; border-bottom: 1px solid rgba(160, 200, 255, .12);
-  position: sticky; top: 0; z-index: 1;
-  background: rgba(16, 23, 45, .92);
+  position: sticky; top: 0; z-index: 5;
+  background: rgba(16, 23, 45, .97);
   -webkit-backdrop-filter: var(--desenfoque); backdrop-filter: var(--desenfoque);
 }
 .modal__titulo { margin: 0; font-size: 1.12rem; font-weight: 800; }

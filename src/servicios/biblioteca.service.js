@@ -183,7 +183,20 @@ function listar(opciones = {}) {
     };
   });
 
-  return { ...resultado, libros };
+  // Los prestamos activos de toda la biblioteca, no solo los de esta pagina:
+  // son los libros que el estudiante tiene en su poder.
+  const prestamosActivos = activos.map((prestamo) => {
+    const libro = librosRepo.obtenerPorId(prestamo.libro_id);
+    return {
+      ...prestamo,
+      titulo: libro ? libro.titulo : prestamo.titulo,
+      portada: libro ? libro.portada : null,
+      categoria: libro ? libro.categoria : null,
+      tiene_archivo: Boolean(libro && libro.archivo_pdf)
+    };
+  });
+
+  return { ...resultado, libros, prestamos_activos: prestamosActivos };
 }
 
 module.exports = {

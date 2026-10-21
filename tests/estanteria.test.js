@@ -510,13 +510,13 @@ test('El motor aplica una posición 3D distinta a cada libro', () => {
 });
 
 test('El núcleo central muestra la sección del libro que está al frente', async () => {
-  assert.equal(doc().querySelector('.nucleo__seccion').textContent, 'Catalogo');
+  assert.equal(doc().querySelector('.nucleo__seccion').textContent, 'Catalogos');
   assert.equal(doc().querySelectorAll('.nucleo__paso.activo').length, 1);
 
   dom.window.Navegacion; // el motor sigue montado
   dom.window.Vistas.inicio.estanteria.avanzar(1);
 
-  await esperar((d) => d.querySelector('.nucleo__seccion').textContent === 'Catalogo',
+  await esperar((d) => d.querySelector('.nucleo__seccion').textContent === 'Catalogos',
     'que el nucleo muestre la seccion siguiente');
 
   assert.equal(doc().querySelectorAll('.nucleo__paso.activo').length, 1);
@@ -572,7 +572,7 @@ test('Al volver a la estantería se recuerda el último libro abierto', async ()
   assert.equal(dom.window.Vistas.inicio.secciones[recordado].ruta, 'catalogo');
 
   await esperar(
-    (d) => d.querySelector('.nucleo__seccion').textContent === 'Catalogo',
+    (d) => d.querySelector('.nucleo__seccion').textContent === 'Catalogos',
     'que la estanteria se abra en el libro del catalogo'
   );
 });

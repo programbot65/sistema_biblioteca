@@ -16,7 +16,7 @@ window.Vistas = window.Vistas || {};
 
 Vistas.biblioteca = {
   titulo: 'Biblioteca digital',
-  descripcion: 'Consulte los libros de la biblioteca y lealos desde aqui.',
+  descripcion: 'Los libros que tienes prestados y los que puedes consultar desde aqui.',
 
   estado: {
     q: '',
@@ -215,11 +215,59 @@ Vistas.biblioteca = {
       piezas.push(nota);
     }
 
+    // Primero los libros que tiene prestados el estudiante: son los que
+    // va a consultar en la biblioteca.
+    if (datos.prestamos_activos && datos.prestamos_activos.length) {
+      piezas.push(this.bloquePrestamos(datos.prestamos_activos));
+    }
+
     const rejilla = crear('div', { clase: 'digital' }, datos.libros.map((libro) => this.tarjeta(libro)));
     piezas.push(rejilla);
     piezas.push(this.paginacion(datos));
 
     contenedor.replaceChildren(...piezas);
+  },
+
+  /**
+   * Los prestamos activos: los libros que estan en poder del estudiante,
+   * con la fecha limite y el estado de devolucion.
+   */
+  bloquePrestamos(prestamos) {
+    const { crear } = UI;
+
+    return crear('section', { clase: 'resumen__bloque' }, [
+      crear('h3', { clase: 'resumen__titulo', texto: 'Tus préstamos' }),
+      crear('ul', { clase: 'prestamos-activos' }, prestamos.map((prestamo) => {
+        const boton = crear('button', {
+          clase: 'boton boton--pequeno',
+          type: 'button',
+          texto: 'Leer libro',
+          onclick: () => Lector.abrir({
+            id: prestamo.libro_id,
+            titulo: prestamo.titulo,
+            categoria: prestamo.categoria,
+            tiene_archivo: prestamo.tiene_archivo
+          })
+        });
+
+        return crear('li', { clase: 'prestamo-activo' }, [
+          crear('div', { clase: 'prestamo-activo__datos' }, [
+            crear('span', { clase: 'prestamo-activo__titulo', texto: prestamo.titulo }),
+            crear('span', {
+              clase: 'prestamo-activo__detalle',
+              texto: `${prestamo.estudiante_nombre} · ${prestamo.estudiante_curso} · ` +
+                `préstamo ${UI.fecha(prestamo.fecha_prestamo)} · ` +
+                `límite ${UI.fecha(prestamo.fecha_limite)}`
+            })
+          ]),
+          crear('span', {
+            clase: `insignia insignia--${prestamo.situacion === 'atrasado' ? 'atrasado' : 'vigente'}`,
+            texto: prestamo.situacion_texto
+          }),
+          boton
+        ]);
+      }))
+    ]);
   },
 
   /**
