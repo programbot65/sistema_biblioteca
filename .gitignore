@@ -5,6 +5,7 @@ data/*.db-wal
 data/*.db-shm
 data/*.sqlite
 data/respaldo/
+data/pdfs/
 .env
 *.log
 npm-debug.log*

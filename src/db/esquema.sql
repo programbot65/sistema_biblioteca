@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS libros (
   editorial     TEXT,
   descripcion   TEXT,
   portada       TEXT,                             -- ruta o URL de la imagen
+  archivo_pdf   TEXT,                             -- ruta del PDF (biblioteca digital)
   cantidad      INTEGER NOT NULL DEFAULT 1 CHECK (cantidad >= 0),
   activo        INTEGER NOT NULL DEFAULT 1 CHECK (activo IN (0, 1)),
   creado_en     TEXT    NOT NULL DEFAULT (datetime('now'))

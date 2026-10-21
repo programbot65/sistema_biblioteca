@@ -70,7 +70,7 @@ set PORT=3001 && npm run dev
 |---------|----------------|
 | `npm start` | Inicia el sistema. |
 | `npm run dev` | Inicia el sistema y reinicia solo al guardar cambios. |
-| `npm test` | Ejecuta las 111 pruebas automáticas del proyecto. |
+| `npm test` | Ejecuta las 123 pruebas automáticas del proyecto. |
 | `npm run db:migrate` | Crea la base de datos y las tablas (no borra datos). |
 | `npm run db:seed` | Carga los datos de prueba si el catálogo está vacío. |
 | `npm run db:reset` | **Borra** la base de datos y la vuelve a crear con datos de prueba. |
@@ -139,6 +139,37 @@ libros se vean bien.
 Debajo de la estantería no hay nada más. El resumen con las cifras, las
 secciones de la biblioteca, los préstamos que necesitan atención y los libros
 destacados vive en su propia vista (`#/panel`).
+
+### La Biblioteca digital 📚
+
+Uno de los libros de la estantería es la **Biblioteca digital**: la sección
+donde los libros del sistema se consultan y **se leen desde la propia página**.
+
+- Cada ficha muestra la **portada, el título, el autor, la categoría y el
+  estado** (Disponible o Prestado).
+- Si el libro está prestado, se conserva la información del préstamo: quién
+  lo tiene, su curso y la fecha límite.
+- El botón **«Leer libro»** abre el **lector integrado**.
+- Con **buscador y filtros** (categoría, disponibilidad y orden) se
+  encuentra cualquier libro.
+- El estado se actualiza solo: al registrar o devolver un préstamo, el
+  libro aparece al día en la sección.
+
+El lector permite **avanzar y retroceder páginas**, **ampliar o reducir** el
+texto y **descargar** el archivo. Si el libro **no tiene un archivo digital**,
+el lector lo dice con claridad («Contenido no disponible») en vez de mostrar
+un hueco.
+
+#### Adjuntar los PDF (encargado de biblioteca)
+
+Los archivos los sube el encargado desde **Administración** (`#/gestion`), en
+el apartado «Biblioteca digital». El sistema **no inventa contenidos**: solo
+están disponibles los PDF que se hayan adjuntado.
+
+- Se acepta un archivo **PDF** de hasta **40 MB** (se comprueba que lo sea).
+- El archivo se guarda en `data/pdfs/` y queda asociado al ejemplar.
+- Se puede **quitar** el archivo sin tocar el libro ni su historial.
+- Esta parte funciona aunque el registro de libros siga en pausa.
 
 ```
                         Gestión
@@ -338,8 +369,9 @@ definitivo de la institución.
 Biblioteca/
 ├── package.json
 ├── README.md
-├── data/                     Base de datos y respaldos (no se versiona)
-│   └── biblioteca.db
+├── data/                     Base de datos, PDF y respaldos (no se versiona)
+│   ├── biblioteca.db
+│   └── pdfs/                 Archivos PDF de la biblioteca digital
 ├── scripts/
 │   ├── migrar.js             Crea el esquema de la base de datos
 │   ├── semilla.js            Carga los datos de prueba
@@ -358,7 +390,8 @@ Biblioteca/
 │   ├── servicios/            Reglas de negocio
 │   │   ├── catalogo.service.js       búsqueda inteligente y recomendaciones
 │   │   ├── prestamos.service.js      préstamos, devoluciones y validaciones
-│   │   └── estadisticas.service.js   cifras del panel
+│   │   ├── estadisticas.service.js   cifras del panel
+│   │   └── biblioteca.service.js     biblioteca digital: lectura y archivos
 │   ├── rutas/                Endpoints de la API
 │   ├── middleware/           Autenticación, errores y lectura de parámetros
 │   └── utiles/               Fechas y procesamiento de texto
@@ -368,6 +401,7 @@ Biblioteca/
 │   │   ├── estilos.css       Estilo general del sistema
 │   │   ├── estanteria.css    Navegación circular de libros
 │   │   ├── biblioteca.css    Las piezas del escritorio
+│   │   ├── biblioteca-digital.css  La sección de lectura y el lector
 │   │   └── tema-claro.css    El tema claro pastel
 │   └── js/
 │       ├── api.js            Cliente de la API
@@ -377,18 +411,20 @@ Biblioteca/
 │       ├── app.js            Enrutador de la aplicación
 │       ├── vistas.js         Registro de vistas
 │       ├── navegacion.js     Motor del carrusel circular (sin estilos)
+│       ├── lector.js         Lector de PDF integrado (sin estilos)
 │       └── vistas/
 │           ├── portada.js    La estantería de libros (la pantalla de inicio)
 │           ├── panel.js      El resumen de la biblioteca
 │           ├── catalogo.js
+│           ├── biblioteca.js La biblioteca digital (consultar y leer)
 │           ├── prestamos.js
 │           ├── usuarios.js
 │           ├── categorias.js
 │           ├── reportes.js
 │           └── gestion.js
 └── tests/
-    ├── api.test.js           35 pruebas de la API y las reglas de negocio
-    ├── interfaz.test.js      26 pruebas de la interfaz en el navegador
+    ├── api.test.js           44 pruebas de la API y las reglas de negocio
+    ├── interfaz.test.js      30 pruebas de la interfaz en el navegador
     ├── estanteria.test.js    31 pruebas de la navegación circular
     └── escritorio.test.js    18 pruebas del rediseño del panel
 ```
@@ -407,7 +443,8 @@ Navegador  ──HTTP/JSON──▶  Servidor Express  ──SQL──▶  SQLit
 ```
 
 - **Frontend:** aplicación de una sola página; La navegación usa `#/inicio`
-  (la estantería) y `#/panel`, `#/catalogo`, `#/usuarios`, `#/prestamos`.
+  (la estantería) y `#/panel`, `#/catalogo`, `#/biblioteca`, `#/usuarios`,
+  `#/prestamos`.
 - **Backend:** valida los datos, aplica las reglas y devuelve JSON.
 - **Base de datos:** cuatro tablas (`categorias`, `libros`, `estudiantes`,
   `prestamos`) con sus índices.
@@ -426,6 +463,10 @@ no hay inyección de SQL ni de código en el navegador.
 | GET | `/api/catalogo/:id` | Ficha del libro con recomendados |
 | GET | `/api/categorias` | Lista de categorías con su total de libros |
 | GET | `/api/recomendaciones?libro=&categoria=&autor=&titulo=` | Sugerencias de libros similares |
+| GET | `/api/biblioteca?q=&categoria=&estado=&orden=` | Biblioteca digital: libros con su estado y su préstamo actual |
+| GET | `/api/libros/:id/archivo` | PDF del libro, para leerlo en la página |
+| POST | `/api/admin/libros/:id/archivo` | Adjuntar (o reemplazar) el PDF de un libro *(requiere clave)* |
+| DELETE | `/api/admin/libros/:id/archivo` | Retirar el PDF *(requiere clave)* |
 | POST | `/api/prestamos` | Registrar préstamo |
 | GET | `/api/prestamos?situacion=&codigo=&cedula=&categoria=` | Listado de préstamos |
 | GET | `/api/prestamos/atrasados` | Préstamos atrasados |
@@ -469,19 +510,25 @@ Las rutas de administración reciben la clave en la cabecera `x-admin-clave`.
 npm test
 ```
 
-Se ejecutan **111 pruebas** de forma automática:
+Se ejecutan **123 pruebas** de forma automática:
 
-- **35 de la API:** catálogo, búsqueda por cada campo, búsqueda inteligente con
+- **44 de la API:** catálogo, búsqueda por cada campo, búsqueda inteligente con
   errores de escritura, validaciones del formulario, cálculo de la fecha límite,
   límites de préstamo, devolución, renovación, detección de atrasos, historial,
-  estadísticas, recomendaciones y protección con clave.
-- **26 de la interfaz:** la página carga la estantería como inicio, sus libros
-  son las secciones del sistema, no hay barra lateral, los datos de un
-  estudiante conocido se completan solos, el plazo de préstamo es el que
-  escribe el encargado, el formulario avisa donde está el error, la
-  navegación entre secciones, el buscador, la ficha con recomendaciones, el
-  registro de un préstamo completo desde el formulario, el registro de una
-  devolución, el acceso del encargado y la ausencia de errores de JavaScript.
+  estadísticas, recomendaciones y protección con clave. Además, la **biblioteca
+  digital**: listado con el estado y el préstamo actual, adjuntar un PDF (con
+  clave y comprobando que sea un PDF de verdad), leerlo desde la página y
+  quitarlo.
+- **30 de la interfaz:** la página carga la estantería como inicio, sus libros
+  son las secciones del sistema, no hay barra lateral, la **biblioteca digital**
+  lista los libros con su estado y su botón de leer, un libro sin archivo
+  digital avisa de que su contenido no está disponible, el encargado puede
+  adjuntar los PDF desde la administración, los datos de un estudiante conocido
+  se completan solos, el plazo de préstamo es el que escribe el encargado, el
+  formulario avisa donde está el error, la navegación entre secciones, el
+  buscador, la ficha con recomendaciones, el registro de un préstamo completo
+  desde el formulario, el registro de una devolución, el acceso del encargado y
+  la ausencia de errores de JavaScript.
 - **31 de la estantería:** la matemática del anillo, la profundidad de cada
   posición, la rueda con acumulación, el arrastre con inercia, el teclado, la
   apertura al elegir un libro, la limpieza del motor al salir de la sección y

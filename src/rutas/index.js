@@ -4,6 +4,7 @@
 
 const express = require('express');
 const catalogos = require('./catalogo');
+const biblioteca = require('./biblioteca');
 const prestamos = require('./prestamos');
 const estudiantes = require('./estudiantes');
 const panel = require('./panel');
@@ -22,6 +23,8 @@ router.get('/', (req, res) => {
       libro: 'GET /api/catalogo/:id',
       categorias: 'GET /api/categorias',
       recomendaciones: 'GET /api/recomendaciones?libro=&categoria=&q=',
+      biblioteca: 'GET /api/biblioteca?q=&categoria=&estado=',
+      archivo_libro: 'GET /api/libros/:id/archivo',
       registrar_prestamo: 'POST /api/prestamos',
       registrar_devolucion: 'POST /api/prestamos/:id/devolucion',
       renovar_prestamo: 'POST /api/prestamos/:id/renovar',
@@ -37,6 +40,7 @@ router.get('/', (req, res) => {
 
 router.use('/', panel);
 router.use('/', catalogos);
+router.use('/', biblioteca);
 router.use('/prestamos', prestamos);
 router.use('/estudiantes', estudiantes);
 router.use('/admin', administracion);

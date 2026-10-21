@@ -43,7 +43,9 @@ window.Api = (() => {
   async function pedir(ruta, opciones = {}) {
     const cabeceras = { ...(opciones.headers || {}) };
 
-    if (opciones.cuerpo) cabeceras['Content-Type'] = 'application/json';
+    if (opciones.cuerpo) {
+      cabeceras['Content-Type'] = opciones.tipoContenido || 'application/json';
+    }
     if (opciones.admin) cabeceras['x-admin-clave'] = claveAdmin.valor;
 
     let respuesta;
@@ -51,7 +53,9 @@ window.Api = (() => {
       respuesta = await fetch(`${BASE}${ruta}`, {
         method: opciones.metodo || 'GET',
         headers: cabeceras,
-        body: opciones.cuerpo ? JSON.stringify(opciones.cuerpo) : undefined
+        body: opciones.cuerpo
+          ? (opciones.tipoContenido ? opciones.cuerpo : JSON.stringify(opciones.cuerpo))
+          : undefined
       });
     } catch (error) {
       throw new ErrorApi(
@@ -95,6 +99,24 @@ window.Api = (() => {
     libro: (id) => pedir(`/catalogo/${id}`),
     categorias: () => pedir('/categorias'),
     recomendaciones: (filtros) => pedir(`/recomendaciones${query(filtros)}`),
+
+    // --- Biblioteca digital (leer en la pagina) ---
+    biblioteca: (filtros) => pedir(`/biblioteca${query(filtros)}`),
+    /** Direccion del PDF de un libro: la usa el lector integrado. */
+    archivoLibro: (id, opciones = {}) => {
+      const descarga = opciones.descarga ? '?descarga=1' : '';
+      return `${BASE}/libros/${id}/archivo${descarga}`;
+    },
+    subirArchivo: (id, archivo) => pedir(`/admin/libros/${id}/archivo`, {
+      metodo: 'POST',
+      cuerpo: archivo,
+      tipoContenido: 'application/pdf',
+      admin: true
+    }),
+    quitarArchivo: (id) => pedir(`/admin/libros/${id}/archivo`, {
+      metodo: 'DELETE',
+      admin: true
+    }),
 
     // --- Prestamos ---
     prestamos: (filtros) => pedir(`/prestamos${query(filtros)}`),

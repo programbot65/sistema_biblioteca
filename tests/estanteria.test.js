@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 /**
  * Pruebas de la estanteria circular de libros.
@@ -474,10 +474,10 @@ test.after(() => {
 
 test('La portada dibuja un libro por cada sección existente', () => {
   const libros = doc().querySelectorAll('.estanteria__anillo .libro');
-  assert.equal(libros.length, 3);
+  assert.equal(libros.length, 4);
 
   const rutas = Array.from(libros).map((libro) => libro.dataset.vista);
-  assert.deepEqual(rutas, ['catalogo', 'usuarios', 'prestamos']);
+  assert.deepEqual(rutas, ['catalogo', 'biblioteca', 'usuarios', 'prestamos']);
 });
 
 test('Cada libro tiene nombre accesible, lomo, paginas y tapa', () => {
@@ -499,7 +499,7 @@ test('El motor aplica una posición 3D distinta a cada libro', () => {
   const libros = Array.from(doc().querySelectorAll('.estanteria__anillo .libro'));
   const transformaciones = libros.map((libro) => libro.style.transform);
 
-  assert.equal(new Set(transformaciones).size, 3, 'los tres libros deben estar en sitios distintos');
+  assert.equal(new Set(transformaciones).size, 4, 'los cuatro libros deben estar en sitios distintos');
   for (const transformacion of transformaciones) {
     assert.match(transformacion, /translate3d\(/);
     assert.match(transformacion, /scale\(/);
@@ -559,10 +559,10 @@ test('El botón del encabezado permite volver a la estantería', async () => {
 
   volver.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
 
-  await esperar((d) => d.querySelectorAll('.estanteria__anillo .libro').length === 3,
+  await esperar((d) => d.querySelectorAll('.estanteria__anillo .libro').length === 4,
     'que vuelva la estanteria');
 
-  assert.equal(doc().querySelectorAll('.estanteria__anillo .libro').length, 3);
+  assert.equal(doc().querySelectorAll('.estanteria__anillo .libro').length, 4);
   assert.equal(doc().getElementById('volver-estanteria').hidden, true,
     'en la estanteria no hace falta el botón de volver');
 });
@@ -582,7 +582,7 @@ test('La navegación accesible sigue disponible aunque el carrusel no se use', (
   const libros = doc().querySelectorAll('.estanteria__anillo .libro');
   const rutas = Array.from(libros).map((libro) => libro.getAttribute('href') || `#/${libro.dataset.vista}`);
 
-  assert.deepEqual(rutas, ['#/catalogo', '#/usuarios', '#/prestamos']);
+  assert.deepEqual(rutas, ['#/catalogo', '#/biblioteca', '#/usuarios', '#/prestamos']);
 });
 
 test('Las secciones existentes siguen funcionando tras el rediseño', async () => {

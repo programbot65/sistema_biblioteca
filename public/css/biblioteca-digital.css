@@ -1,0 +1,299 @@
+/* ==========================================================================
+   Biblioteca digital — la sección que permite leer los libros en la página
+   --------------------------------------------------------------------------
+   1. La rejilla de libros   2. La tarjeta   3. El lector
+   4. El mensaje sin archivo 5. Responsive   6. Preferencias del sistema
+   ========================================================================== */
+
+/* ---------- 1. La rejilla de libros ---------- */
+.digital {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 1rem;
+}
+
+/* ---------- 2. La tarjeta ---------- */
+.digital__item {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid var(--borde-cristal);
+  background: linear-gradient(170deg, rgba(38, 50, 92, .86), rgba(12, 18, 38, .92));
+  box-shadow: var(--sombra), inset 0 1px 0 rgba(255, 255, 255, .08);
+  transition: transform .28s cubic-bezier(.22, .9, .28, 1), box-shadow .28s, border-color .28s;
+}
+.digital__item:hover {
+  transform: translateY(-5px);
+  border-color: var(--libro-borde, rgba(72, 229, 255, .5));
+  box-shadow: var(--sombra-alta), 0 18px 44px var(--libro-sombra, rgba(72, 229, 255, .22));
+}
+
+.digital__portada {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: linear-gradient(150deg, #1B2A52 0%, #141D36 45%, #2A1F55 100%);
+}
+.digital__portada-imagen {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: .8rem;
+  font-weight: 800;
+  font-size: .95rem;
+  line-height: 1.3;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, .6);
+  border-bottom: 1px solid rgba(160, 200, 255, .14);
+}
+
+.digital__cuerpo {
+  display: grid;
+  gap: .3rem;
+  align-content: start;
+  padding: .85rem .9rem 1rem;
+}
+
+.digital__categoria {
+  justify-self: start;
+  font-size: .66rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--libro-color, var(--cian));
+}
+
+.digital__titulo {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--texto);
+}
+
+.digital__autor {
+  margin: 0;
+  font-size: .84rem;
+  color: var(--texto-suave);
+}
+
+/* Datos del prestamo actual: se conservan a la vista. */
+.digital__prestamo {
+  display: grid;
+  gap: .1rem;
+  margin-top: .25rem;
+  padding: .45rem .55rem;
+  border-radius: 10px;
+  background: rgba(120, 170, 255, .06);
+  border: 1px solid rgba(160, 200, 255, .1);
+}
+.digital__prestamo-linea { font-size: .78rem; font-weight: 700; color: var(--texto); }
+.digital__prestamo-linea--tenue { font-weight: 500; color: var(--texto-tenue); font-size: .74rem; }
+
+.digital__pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  margin-top: .35rem;
+}
+.digital__codigo {
+  font-size: .7rem;
+  font-family: Consolas, "Courier New", monospace;
+  color: var(--texto-tenue);
+}
+
+.digital__leer { width: 100%; margin-top: .5rem; }
+
+.digital__aviso {
+  margin: .1rem 0 0;
+  font-size: .72rem;
+  color: var(--texto-tenue);
+  text-align: center;
+}
+
+/* ---------- 3. El lector ---------- */
+.modal__caja--lector {
+  width: min(1080px, 100%);
+  height: min(92vh, 900px);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal__cuerpo--lector {
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.lector {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+}
+
+.lector__marco {
+  flex: 1;
+  width: 100%;
+  min-height: 320px;
+  border: none;
+  background: #F2F4F9;
+}
+
+.lector__controles {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: .4rem;
+  padding: .6rem .8rem;
+  border-top: 1px solid var(--borde-cristal);
+  background: rgba(12, 18, 38, .8);
+}
+
+.lector__boton {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--texto-suave);
+  background: rgba(120, 170, 255, .08);
+  border: 1px solid var(--borde-cristal);
+  transition: color .18s ease, border-color .18s ease, background .18s ease, transform .18s ease;
+}
+.lector__boton:hover:not(:disabled) {
+  color: var(--cian);
+  border-color: rgba(72, 229, 255, .5);
+  background: rgba(72, 229, 255, .1);
+  transform: translateY(-2px);
+}
+.lector__boton:disabled { opacity: .35; cursor: default; }
+.lector__glifo { display: grid; place-items: center; }
+.lector__glifo svg { width: 17px; height: 17px; }
+
+.lector__pagina {
+  min-width: 140px;
+  text-align: center;
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--texto);
+  font-variant-numeric: tabular-nums;
+}
+
+.lector__zoom {
+  min-width: 56px;
+  text-align: center;
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.lector__separador {
+  width: 1px;
+  height: 20px;
+  background: var(--borde-cristal);
+  margin: 0 .3rem;
+}
+
+/* ---------- 4. El mensaje sin archivo digital ---------- */
+.lector__vacio {
+  margin: auto;
+  max-width: 460px;
+  padding: 2rem 1.5rem;
+  display: grid;
+  justify-items: center;
+  gap: .5rem;
+  text-align: center;
+}
+.lector__vacio-icono {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  color: var(--texto-tenue);
+  background: rgba(120, 170, 255, .08);
+  border: 1px solid var(--borde-cristal);
+}
+.lector__vacio-icono svg { width: 28px; height: 28px; }
+.lector__vacio-titulo { margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--texto); }
+.lector__vacio-texto { margin: 0; color: var(--texto-suave); font-size: .9rem; }
+.lector__vacio-nota { margin: 0; color: var(--texto-tenue); font-size: .8rem; }
+
+/* ---------- 5. Panel de archivos del encargado ---------- */
+.archivos { display: grid; gap: .4rem; }
+.archivo {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  flex-wrap: wrap;
+  padding: .5rem .65rem;
+  border-radius: 12px;
+  background: rgba(18, 26, 52, .45);
+  border: 1px solid rgba(160, 200, 255, .1);
+}
+.archivo__datos { display: grid; gap: .05rem; min-width: 0; flex: 1 1 180px; }
+.archivo__titulo {
+  font-size: .86rem;
+  font-weight: 700;
+  color: var(--texto);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.archivo__codigo {
+  font-size: .7rem;
+  font-family: Consolas, "Courier New", monospace;
+  color: var(--texto-tenue);
+}
+.archivo__acciones { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+
+/* ---------- 6. Responsive ---------- */
+@media (max-width: 640px) {
+  .digital { grid-template-columns: 1fr; }
+  .modal__caja--lector { height: 94vh; width: 100%; border-radius: 18px; }
+  .lector__marco { min-height: 240px; }
+  .lector__pagina { min-width: 110px; font-size: .78rem; }
+}
+
+/* ---------- 7. Preferencias del sistema ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .digital__item { transition: none; }
+}
+
+/* ---------- Tema claro ---------- */
+[data-tema="claro"] .digital__item {
+  background: linear-gradient(170deg, rgba(255, 255, 255, .96), rgba(244, 247, 253, .92));
+  box-shadow: 0 4px 16px rgba(45, 66, 130, .08), inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+
+[data-tema="claro"] .digital__portada {
+  background: linear-gradient(150deg, #E9EDF7 0%, #DFE5F3 45%, #EDE7F8 100%);
+}
+
+[data-tema="claro"] .digital__prestamo {
+  background: rgba(11, 147, 184, .07);
+  border-color: rgba(11, 147, 184, .16);
+}
+
+[data-tema="claro"] .lector__marco { background: #F2F4F9; }
+
+[data-tema="claro"] .lector__controles {
+  background: rgba(243, 246, 252, .96);
+  border-top-color: rgba(96, 116, 172, .16);
+}
+
+[data-tema="claro"] .archivo {
+  background: rgba(255, 255, 255, .8);
+  border-color: rgba(96, 116, 172, .16);
+}

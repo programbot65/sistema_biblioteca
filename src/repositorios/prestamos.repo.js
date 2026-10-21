@@ -45,6 +45,19 @@ function activoDelLibro(libroId) {
   return db.obtener(`${SELECCION_BASE} WHERE p.libro_id = ? AND p.estado = 'activo'`, libroId);
 }
 
+/**
+ * Todos los prestamos activos con los datos del estudiante.
+ * Se usa en la biblioteca digital para mostrar de un vistazo quien tiene
+ * cada libro y hasta cuando.
+ */
+function activosConEstudiante() {
+  return db.todas(`
+    ${SELECCION_BASE}
+    WHERE p.estado = 'activo'
+    ORDER BY p.fecha_limite ASC
+  `);
+}
+
 function contarActivosDelEstudiante(estudianteId) {
   const fila = db.obtener(
     "SELECT COUNT(*) AS total FROM prestamos WHERE estudiante_id = ? AND estado = 'activo'",
@@ -194,6 +207,7 @@ function ultimos(limite = 8) {
 module.exports = {
   obtenerPorId,
   activoDelLibro,
+  activosConEstudiante,
   contarActivosDelEstudiante,
   listar,
   contar,

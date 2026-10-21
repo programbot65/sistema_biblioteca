@@ -22,6 +22,7 @@ const SELECCION_BASE = `
     l.editorial,
     l.descripcion,
     l.portada,
+    l.archivo_pdf,
     l.cantidad,
     l.activo,
     l.creado_en,
@@ -182,6 +183,12 @@ function reactivar(id) {
   return db.ejecutar('UPDATE libros SET activo = 1 WHERE id = ?', id);
 }
 
+/** Guarda (o quita) la ruta del PDF que se puede leer desde la pagina. */
+function guardarArchivo(id, ruta) {
+  db.ejecutar('UPDATE libros SET archivo_pdf = ? WHERE id = ?', ruta || null, id);
+  return obtenerPorId(id);
+}
+
 function existeCodigo(codigo, exceptoId = null) {
   const fila = db.obtener(
     'SELECT id FROM libros WHERE codigo = ? AND (? IS NULL OR id <> ?)',
@@ -232,5 +239,6 @@ module.exports = {
   actualizar,
   desactivar,
   reactivar,
+  guardarArchivo,
   existeCodigo
 };

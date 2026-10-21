@@ -17,7 +17,13 @@ Vistas.gestion = {
     // exponen formularios. Para rehabilitarlo, ponga `registroDeLibros: true`
     // en `public/js/vistas.js`; el código de administración sigue intacto.
     if (!window.BibliotecaConfig || !window.BibliotecaConfig.registroDeLibros) {
-      contenedor.replaceChildren(crearTextoVista(), this.construirPausa());
+      // La pausa afecta al alta de libros, pero la biblioteca digital sigue
+      // disponible: el encargado puede adjuntar los PDF que ya existen.
+      contenedor.replaceChildren(
+        crearTextoVista(),
+        this.construirPausa(),
+        this.construirBibliotecaDigital()
+      );
       return;
     }
     if (!Api.claveAdmin.valor) {
@@ -25,6 +31,160 @@ Vistas.gestion = {
       return;
     }
     await this.mostrarFormulario();
+  },
+
+  /**
+   * Panel de la Biblioteca digital: permite adjuntar (o retirar) el PDF de
+   * un libro para que se pueda leer desde la pagina. Los archivos solo
+   * existen si los sube el encargado: no se inventa ningun contenido.
+   */
+  construirBibliotecaDigital() {
+    const { crear } = UI;
+
+    this.contenedorArchivos = crear('div', { clase: 'archivos' });
+
+    const panel = crear('section', { clase: 'tarjeta' }, [
+      crear('h3', { clase: 'tarjeta__titulo', texto: 'Biblioteca digital' }),
+      crear('p', {
+        clase: 'texto-suave',
+        texto: 'Adjunte el archivo PDF de un libro para que se pueda leer desde la página. Solo están disponibles los archivos que suba el encargado.'
+      }),
+      this.contenedorArchivos
+    ]);
+
+    this.pintarAccesoArchivos();
+    return panel;
+  },
+
+  /** Pide la clave solo si hace falta para adjuntar archivos. */
+  pintarAccesoArchivos() {
+    const { crear } = UI;
+
+    if (Api.claveAdmin.valor) {
+      this.contenedorArchivos.replaceChildren(
+        crear('p', { clase: 'cargando', texto: 'Cargando los libros...' })
+      );
+      this.cargarArchivos();
+      return;
+    }
+
+    const entrada = crear('input', {
+      type: 'password',
+      name: 'clave',
+      placeholder: 'Clave del encargado',
+      'aria-label': 'Clave del encargado',
+      autocomplete: 'current-password'
+    });
+
+    const formulario = crear('form', {
+      class: 'acceso',
+      onsubmit: (evento) => {
+        evento.preventDefault();
+        if (!entrada.value.trim()) {
+          UI.alerta('Escriba la clave para continuar.');
+          return;
+        }
+        Api.claveAdmin.guardar(entrada.value.trim());
+        UI.exito('Acceso concedido.');
+        this.pintarAccesoArchivos();
+      }
+    }, [
+      crear('div', { clase: 'campo' }, [
+        crear('label', { for: 'clave-archivos', texto: 'Clave de administración' }),
+        entrada,
+        crear('span', { clase: 'campo__ayuda', texto: 'Clave por defecto del proyecto: ueea2026' })
+      ]),
+      crear('button', { clase: 'boton boton--primario', type: 'submit', texto: 'Entrar' })
+    ]);
+
+    this.contenedorArchivos.replaceChildren(formulario);
+  },
+
+  /** Lista los libros con su archivo digital y permite adjuntar o quitar. */
+  async cargarArchivos() {
+    const { crear } = UI;
+    if (!this.contenedorArchivos) return;
+
+    try {
+      const datos = await Api.biblioteca({ limite: 60, orden: 'titulo' });
+
+      if (!datos.libros.length) {
+        this.contenedorArchivos.replaceChildren(
+          UI.vacio('Todavía no hay libros en el catálogo.')
+        );
+        return;
+      }
+
+      this.contenedorArchivos.replaceChildren(...datos.libros.map((libro) => this.filaArchivo(libro)));
+    } catch (error) {
+      this.contenedorArchivos.replaceChildren(
+        UI.vacio('No se pudieron cargar los libros.')
+      );
+      UI.errorApi(error);
+    }
+  },
+
+  /** Una fila por libro: el que tiene archivo y el que no. */
+  filaArchivo(libro) {
+    const { crear } = UI;
+
+    const entrada = crear('input', {
+      type: 'file',
+      accept: 'application/pdf,.pdf',
+      'aria-label': `Archivo PDF de ${libro.titulo}`,
+      estilo: 'font-size:.76rem;max-width:210px'
+    });
+
+    entrada.addEventListener('change', () => {
+      const archivo = entrada.files && entrada.files[0];
+      if (!archivo) return;
+      this.subirArchivo(libro.id, archivo);
+    });
+
+    const acciones = crear('div', { clase: 'archivo__acciones' }, [entrada]);
+
+    if (libro.tiene_archivo) {
+      acciones.appendChild(crear('button', {
+        clase: 'boton boton--pequeno boton--peligro',
+        type: 'button',
+        texto: 'Quitar PDF',
+        onclick: () => this.quitarArchivo(libro.id)
+      }));
+    }
+
+    return crear('div', { clase: 'archivo' }, [
+      crear('div', { clase: 'archivo__datos' }, [
+        crear('span', { clase: 'archivo__titulo', texto: libro.titulo }),
+        crear('span', { clase: 'archivo__codigo', texto: libro.codigo })
+      ]),
+      crear('span', {
+        clase: `insignia ${libro.tiene_archivo ? 'insignia--disponible' : 'insignia--devuelto'}`,
+        texto: libro.tiene_archivo ? 'PDF adjunto' : 'Sin PDF'
+      }),
+      acciones
+    ]);
+  },
+
+  /** Sube el PDF de un libro. */
+  async subirArchivo(id, archivo) {
+    try {
+      const resultado = await Api.subirArchivo(id, archivo);
+      UI.exito(resultado.mensaje);
+      await this.cargarArchivos();
+    } catch (error) {
+      UI.errorApi(error);
+    }
+  },
+
+  /** Retira el PDF de un libro (el libro no se borra). */
+  async quitarArchivo(id) {
+    try {
+      const resultado = await Api.quitarArchivo(id);
+      UI.exito(resultado.mensaje);
+      await this.cargarArchivos();
+    } catch (error) {
+      UI.errorApi(error);
+    }
   },
 
   /** Aviso elegante mientras el registro de libros está en preparación. */

@@ -80,6 +80,35 @@ async function pedir(ruta, opciones = {}) {
 
 const comoEncargado = { 'x-admin-clave': CLAVE };
 
+/** Un PDF de prueba valido, con dos paginas. */
+function pdfDePrueba() {
+  return Buffer.from(
+    '%PDF-1.4\n' +
+    '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n' +
+    '2 0 obj\n<< /Type /Pages /Kids [3 0 R 5 0 R] /Count 2 >>\nendobj\n' +
+    '3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >>\nendobj\n' +
+    '4 0 obj\n<< /Length 44 >>\nstream\nBT /F1 24 Tf 72 700 Td (Pagina 1) Tj ET\nendstream\nendobj\n' +
+    '5 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 6 0 R >>\nendobj\n' +
+    '6 0 obj\n<< /Length 44 >>\nstream\nBT /F1 24 Tf 72 700 Td (Pagina 2) Tj ET\nendstream\nendobj\n' +
+    'trailer\n<< /Root 1 0 R >>\n%%EOF\n',
+    'latin1'
+  );
+}
+
+/** Envia un archivo binario al servidor. */
+async function pedirBinario(ruta, buffer, cabeceras = {}) {
+  const respuesta = await fetch(`${base}${ruta}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/pdf', ...cabeceras },
+    body: buffer
+  });
+
+  const texto = await respuesta.text();
+  let datos = null;
+  try { datos = JSON.parse(texto); } catch (error) { datos = texto; }
+  return { estado: respuesta.status, datos };
+}
+
 let secuencia = 0;
 
 /** Crea un libro nuevo y aislado, para que cada prueba no dependa de otra. */
@@ -430,6 +459,122 @@ test('RF05 - se puede renovar el plazo de un prestamo activo una sola vez', asyn
     method: 'POST', body: { dias: 5 }
   });
   assert.equal(segunda.estado, 409);
+});
+
+// ---------------------------------------------------------------------
+// Biblioteca digital: consultar y leer los libros desde la pagina
+// ---------------------------------------------------------------------
+test('BD01 - la biblioteca digital lista los libros con su estado y su prestamo', async () => {
+  const libro = await crearLibro({ titulo: 'Libro para leer', cantidad: 1 });
+  await prestar(libro, { cedula: '0997770001' });
+
+  const { estado, datos } = await pedir('/api/biblioteca?limite=200');
+  assert.equal(estado, 200);
+
+  const encontrado = datos.libros.find((l) => l.id === libro.id);
+  assert.ok(encontrado, 'el libro debe aparecer en la biblioteca digital');
+  assert.equal(encontrado.tiene_archivo, false);
+  assert.equal(encontrado.estado, 'agotado');
+  assert.ok(encontrado.prestamo_actual, 'debe indicar el prestamo actual');
+  assert.equal(encontrado.prestamo_actual.estudiante.cedula, '0997770001');
+  assert.ok(encontrado.prestamo_actual.fecha_limite);
+});
+
+test('BD02 - la biblioteca digital respeta el buscador y los filtros', async () => {
+  const { datos } = await pedir('/api/biblioteca?q=Principit&limite=50');
+  assert.ok(datos.libros.length > 0);
+  assert.ok(datos.libros.every((l) => /principit/i.test(l.titulo)));
+});
+
+test('BD03 - el encargado puede adjuntar un PDF a un libro', async () => {
+  const libro = await crearLibro({ titulo: 'Libro con PDF' });
+
+  const subida = await pedirBinario(
+    `/api/admin/libros/${libro.id}/archivo`,
+    pdfDePrueba(),
+    comoEncargado
+  );
+
+  assert.equal(subida.estado, 200);
+  assert.ok(subida.datos.libro.archivo_pdf, 'el libro debe guardar la ruta del PDF');
+  assert.equal(subida.datos.paginas, 2, 'debe contar las paginas del PDF');
+
+  const listado = await pedir('/api/biblioteca?limite=200');
+  const encontrado = listado.datos.libros.find((l) => l.id === libro.id);
+  assert.equal(encontrado.tiene_archivo, true);
+});
+
+test('BD04 - sin la clave no se puede adjuntar un archivo', async () => {
+  const libro = await crearLibro({ titulo: 'Libro protegido' });
+
+  const subida = await pedirBinario(`/api/admin/libros/${libro.id}/archivo`, pdfDePrueba());
+  assert.equal(subida.estado, 401);
+});
+
+test('BD05 - solo se aceptan archivos PDF de verdad', async () => {
+  const libro = await crearLibro({ titulo: 'Libro sin PDF valido' });
+
+  const subida = await pedirBinario(
+    `/api/admin/libros/${libro.id}/archivo`,
+    Buffer.from('esto no es un pdf'),
+    comoEncargado
+  );
+
+  assert.equal(subida.estado, 422);
+  assert.match(subida.datos.mensaje, /PDF/i);
+});
+
+test('BD06 - el PDF se puede leer desde la pagina', async () => {
+  const libro = await crearLibro({ titulo: 'Libro para el lector' });
+  await pedirBinario(`/api/admin/libros/${libro.id}/archivo`, pdfDePrueba(), comoEncargado);
+
+  const respuesta = await fetch(`${base}/api/libros/${libro.id}/archivo`);
+  assert.equal(respuesta.status, 200);
+  assert.equal(respuesta.headers.get('content-type'), 'application/pdf');
+  assert.equal(respuesta.headers.get('x-paginas'), '2');
+
+  const contenido = Buffer.from(await respuesta.arrayBuffer());
+  assert.equal(contenido.toString('latin1', 0, 5), '%PDF-');
+});
+
+test('BD07 - un libro sin archivo digital avisa de que no esta disponible', async () => {
+  const libro = await crearLibro({ titulo: 'Libro todavia sin digitalizar' });
+
+  const respuesta = await fetch(`${base}/api/libros/${libro.id}/archivo`);
+  assert.equal(respuesta.status, 404);
+
+  const datos = await respuesta.json();
+  assert.match(datos.mensaje, /no tiene un archivo digital/i);
+});
+
+test('BD08 - el encargado puede quitar el PDF de un libro', async () => {
+  const libro = await crearLibro({ titulo: 'Libro que se queda sin PDF' });
+  await pedirBinario(`/api/admin/libros/${libro.id}/archivo`, pdfDePrueba(), comoEncargado);
+
+  const quitar = await pedir(`/api/admin/libros/${libro.id}/archivo`, {
+    method: 'DELETE',
+    headers: comoEncargado
+  });
+
+  assert.equal(quitar.estado, 200);
+  assert.equal(quitar.datos.libro.archivo_pdf, null);
+});
+
+test('BD09 - al registrar un prestamo el estado del libro se actualiza solo', async () => {
+  const libro = await crearLibro({ titulo: 'Libro que se presta', cantidad: 1 });
+
+  const antes = await pedir('/api/biblioteca?limite=200');
+  const antesLibro = antes.datos.libros.find((l) => l.id === libro.id);
+  assert.equal(antesLibro.estado, 'disponible');
+  assert.equal(antesLibro.prestamo_actual, null);
+
+  await prestar(libro, { cedula: '0997770002' });
+
+  const despues = await pedir('/api/biblioteca?limite=200');
+  const despuesLibro = despues.datos.libros.find((l) => l.id === libro.id);
+  assert.equal(despuesLibro.estado, 'agotado');
+  assert.ok(despuesLibro.prestamo_actual, 'debe verse el prestamo nuevo');
+  assert.equal(despuesLibro.prestamo_actual.estudiante.cedula, '0997770002');
 });
 
 // ---------------------------------------------------------------------

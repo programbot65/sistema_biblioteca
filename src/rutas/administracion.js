@@ -11,6 +11,7 @@ const express = require('express');
 const db = require('../db');
 const librosRepo = require('../repositorios/libros.repo');
 const catalogo = require('../servicios/catalogo.service');
+const biblioteca = require('../servicios/biblioteca.service');
 const consulta = require('../middleware/consulta');
 const { ErrorValidacion, envolver } = require('../middleware/errores');
 const { requiereClaveAdmin } = require('../middleware/autenticacion');
@@ -184,8 +185,54 @@ router.post('/libros/:id/reactivar', envolver((req, res) => {
   });
 }));
 
-/** POST /api/admin/categorias */
-router.post('/categorias', envolver((req, res) => {
+/**
+ * POST /api/admin/libros/:id/archivo
+ * Adjunta (o reemplaza) el PDF de un libro para poder leerlo en la pagina.
+ * El archivo llega como cuerpo binario con tipo "application/pdf".
+ */
+router.post(
+  '/libros/:id/archivo',
+  express.raw({ type: 'application/pdf', limit: biblioteca.TAMANO_MAXIMO }),
+  envolver((req, res) => {
+    const id = Number(req.params.id);
+    if (!librosRepo.obtenerPorId(id)) {
+      throw new ErrorValidacion('El libro no existe.', 404);
+    }
+
+    const contenido = Buffer.isBuffer(req.body) ? req.body : null;
+    if (!contenido || !contenido.length) {
+      throw new ErrorValidacion('No se recibió ningún archivo PDF.', 422);
+    }
+
+    const resultado = biblioteca.guardarArchivo(id, contenido);
+    if (resultado.error) {
+      throw new ErrorValidacion(resultado.error, resultado.estado || 422);
+    }
+
+    res.json({
+      libro: catalogo.decorar(resultado.libro),
+      paginas: resultado.paginas,
+      mensaje: resultado.mensaje
+    });
+  })
+);
+
+/** DELETE /api/admin/libros/:id/archivo  (retira el PDF, no el libro) */
+router.delete('/libros/:id/archivo', envolver((req, res) => {
+  const id = Number(req.params.id);
+  const resultado = biblioteca.quitarArchivo(id);
+
+  if (resultado.error) {
+    throw new ErrorValidacion(resultado.error, resultado.estado || 404);
+  }
+
+  res.json({
+    libro: catalogo.decorar(resultado.libro),
+    mensaje: resultado.mensaje
+  });
+}));
+
+/** POST /api/admin/categorias */router.post('/categorias', envolver((req, res) => {
   const nombre = consulta.texto((req.body || {}).nombre, 60);
   if (!nombre) {
     throw new ErrorValidacion('Revise los datos de la categoría.', 422, [

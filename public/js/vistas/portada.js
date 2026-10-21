@@ -41,6 +41,14 @@ Vistas.inicio = {
       tono: 'violeta'
     },
     {
+      ruta: 'biblioteca',
+      etiqueta: 'Biblioteca',
+      titulo: 'BIBLIOTECA',
+      descripcion: 'Leer los libros de la biblioteca desde aqui',
+      icono: 'biblioteca',
+      tono: 'azul'
+    },
+    {
       ruta: 'usuarios',
       etiqueta: 'Usuarios',
       titulo: 'USUARIOS',

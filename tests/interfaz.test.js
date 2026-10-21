@@ -103,6 +103,7 @@ test.before(async () => {
   };
   consola.on('jsdomError', (error) => anotar(error.message));
   consola.on('error', (mensaje) => anotar(String(mensaje)));
+  consola.on('log', (mensaje) => anotar('LOG ' + String(mensaje)));
 
   dom = await JSDOM.fromURL(`${base}/index.html#/panel`, {
     runScripts: 'dangerously',
@@ -170,7 +171,7 @@ test('Los libros de la estantería son las secciones del sistema', async () => {
   const libros = Array.from(documento.querySelectorAll('.estanteria__anillo .libro'));
   assert.deepEqual(
     libros.map((l) => l.dataset.vista),
-    ['catalogo', 'usuarios', 'prestamos']
+    ['catalogo', 'biblioteca', 'usuarios', 'prestamos']
   );
 
   // Al elegir un libro se abre su sección.
@@ -507,7 +508,81 @@ test('La vista de gestion muestra el aviso de registro en preparación', async (
   assert.ok(texto().includes('Registro en preparación'));
   // Sin formularios de registro, edición ni eliminación a la vista.
   assert.equal(dom.window.document.querySelector('[name="titulo"]'), null);
-  assert.equal(dom.window.document.querySelector('[name="clave"]'), null);
+  assert.equal(dom.window.document.querySelector('[name="codigo"]'), null);
+  // La biblioteca digital si se puede administrar: es otra cosa.
+  assert.ok(texto().includes('Biblioteca digital'));
+});
+
+test('La biblioteca digital muestra los libros con su estado y el botón de leer', async () => {
+  dom.window.location.hash = '#/biblioteca';
+
+  await esperar((doc) => doc.querySelectorAll('.digital__item').length > 0, 'los libros digitales');
+
+  const documento = dom.window.document;
+  const tarjetas = Array.from(documento.querySelectorAll('.digital__item'));
+
+  assert.ok(tarjetas.length > 0, 'debe listar los libros registrados');
+
+  for (const tarjeta of tarjetas) {
+    assert.ok(tarjeta.querySelector('.digital__titulo').textContent.trim());
+    assert.ok(tarjeta.querySelector('.digital__autor').textContent.trim());
+    assert.ok(tarjeta.querySelector('.digital__categoria').textContent.trim());
+    assert.ok(tarjeta.querySelector('.insignia').textContent.trim());
+    assert.ok(tarjeta.querySelector('.digital__leer'), 'cada libro debe poder leerse');
+  }
+
+  // La seccion tiene buscador y filtros.
+  assert.ok(documento.querySelector('.buscador input[type="search"]'));
+  assert.ok(documento.querySelectorAll('.filtros select').length >= 2);
+});
+
+test('Un libro sin archivo digital avisa de que su contenido no está disponible', async () => {
+  dom.window.location.hash = '#/biblioteca';
+
+  await esperar((doc) => doc.querySelectorAll('.digital__item').length > 0, 'los libros digitales');
+
+  const documento = dom.window.document;
+  const sinArchivo = Array.from(documento.querySelectorAll('.digital__item'))
+    .find((tarjeta) => tarjeta.querySelector('.digital__aviso'));
+
+  assert.ok(sinArchivo, 'debe avisar de los libros sin archivo');
+
+  sinArchivo.querySelector('.digital__leer')
+    .dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+
+  await esperar((doc) => doc.querySelector('.lector__vacio') !== null, 'el aviso del lector');
+
+  assert.ok(texto().includes('Contenido no disponible'));
+  assert.ok(texto().includes('no tiene un archivo digital'));
+
+  // Se cierra el lector.
+  documento.querySelector('.modal__cerrar')
+    .dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+  await esperar((doc) => doc.querySelector('.lector__vacio') === null, 'el cierre del lector');
+});
+
+test('El encargado puede adjuntar los PDF desde la administración', async () => {
+  dom.window.location.hash = '#/gestion';
+
+  // Se espera a la vista de gestión: el texto "Biblioteca digital" también
+  // aparece en la sección nueva y serviría de espera equivocada.
+  await esperar((doc) => doc.querySelector('.tarjeta--pausa') !== null, 'la vista de gestion');
+
+  const documento = dom.window.document;
+  assert.ok(texto().includes('Biblioteca digital'), 'debe estar el panel de la biblioteca digital');
+
+  // Si pide la clave, se entra con ella.
+  const entrada = documento.querySelector('[name="clave"]');
+  if (entrada) {
+    entrada.value = 'clave-de-prueba';
+    entrada.closest('form')
+      .dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
+  }
+
+  await esperar((doc) => doc.querySelectorAll('.archivo').length > 0, 'la lista de libros');
+
+  assert.ok(documento.querySelectorAll('.archivo input[type="file"]').length > 0);
+  assert.ok(texto().includes('Sin PDF') || texto().includes('PDF adjunto'));
 });
 
 test('El catálogo vacío no ofrece registrar libros mientras dura la pausa', async () => {
