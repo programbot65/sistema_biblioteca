@@ -110,7 +110,7 @@ async function prestar(libro, datos = {}) {
       libro_id: libro.id,
       nombre: 'Estudiante de Prueba',
       cedula: '0990000001',
-      curso: '4to de Bachillerato',
+      curso: '2.º de Bachillerato',
       dias_prestamo: 7,
       ...datos
     }
@@ -307,7 +307,7 @@ test('RF05 - la fecha limite se calcula a partir del plazo acordado', async () =
       libro_id: libro.id,
       nombre: 'Estudiante Plazo',
       cedula: '0992222222',
-      curso: '5to de Bachillerato',
+      curso: '9.º de EGB',
       dias_prestamo: 3
     }
   });
@@ -345,7 +345,7 @@ test('RF05 - el formulario rechaza datos incompletos o invalidos', async () => {
 
 test('RF05 - no se puede prestar mas de 3 libros al mismo estudiante', async () => {
   const cedula = '0912345678';
-  const datos = { nombre: 'Estudiante Limite', cedula, curso: '6to de Bachillerato' };
+  const datos = { nombre: 'Estudiante Limite', cedula, curso: '3.º de Bachillerato' };
 
   for (let i = 0; i < 3; i += 1) {
     const libro = await crearLibro();

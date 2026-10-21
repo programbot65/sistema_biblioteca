@@ -140,13 +140,44 @@ window.UI = (() => {
     crear('span', { clase: `insignia insignia--${estado}`, texto: ETIQUETAS[estado] || estado });
 
   /**
+   * Paleta viva por categoría: 8 tonos sobre base oscura para que las
+   * portadas generadas tengan color propio sin perder legibilidad.
+   * El reparto es determinista (misma categoría, mismo tono siempre).
+   */
+  const TONOS_PORTADA = ['t0', 't1', 't2', 't3', 't4', 't5', 't6', 't7'];
+
+  /** Tono fijo de cada categoría del inventario para un reparto equilibrado. */
+  const TONO_POR_CATEGORIA = {
+    'literatura': 't0',
+    'ciencias naturales': 't4',
+    'matematicas': 't5',
+    'ciencias sociales': 't3',
+    'lengua y literatura': 't1',
+    'ingles': 't2',
+    'informatica': 't6',
+    'administracion y gestion': 't7'
+  };
+
+  function tonoCategoria(nombre) {
+    const base = String(nombre || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    if (!base) return 't0';
+    if (TONO_POR_CATEGORIA[base]) return TONO_POR_CATEGORIA[base];
+    // Categorías nuevas o personalizadas: reparto estable por suma de códigos.
+    let suma = 0;
+    for (let i = 0; i < base.length; i += 1) suma = (suma + base.charCodeAt(i)) % 997;
+    return TONOS_PORTADA[suma % TONOS_PORTADA.length];
+  }
+
+  /**
    * Portada del libro. Si no hay imagen registrada se dibuja una portada
    * con el titulo, para no depender de archivos externos ni de Internet.
    */
   function portada(libro, clase = 'libro__portada') {
+    const tono = tonoCategoria(libro.categoria);
     if (libro.portada) {
       return crear('img', {
-        clase,
+        clase: `${clase} portada--${tono}`,
         src: libro.portada,
         alt: `Portada de ${libro.titulo}`,
         loading: 'lazy'
@@ -158,7 +189,7 @@ window.UI = (() => {
       : libro.titulo;
 
     return crear('div', {
-      clase,
+      clase: `${clase} portada--${tono}`,
       texto,
       title: libro.titulo,
       'aria-label': `Portada de ${libro.titulo}`
@@ -209,6 +240,8 @@ window.UI = (() => {
       if (mensaje) mensaje.textContent = '';
     });
 
+    let primero = null;
+
     for (const detalle of detalles || []) {
       const entrada = formulario.querySelector(`[name="${detalle.campo}"]`);
       if (!entrada) continue;
@@ -217,7 +250,15 @@ window.UI = (() => {
       campo.classList.add('campo--error');
       const mensaje = campo.querySelector('.campo__error');
       if (mensaje) mensaje.textContent = detalle.mensaje;
+      if (!primero) primero = entrada;
     }
+
+    // El foco va al primer campo con error: asi se corrige sin buscarlo.
+    if (primero && typeof primero.focus === 'function') {
+      try { primero.focus({ preventScroll: false }); } catch (error) { primero.focus(); }
+    }
+
+    return primero;
   }
 
   /** Crea un campo de formulario completo con su etiqueta y mensaje de error. */
@@ -248,10 +289,38 @@ window.UI = (() => {
     ]);
   }
 
+  /** Tema claro/oscuro: preferencia real guardada en este navegador. */
+  const Tema = (() => {
+    const CLAVE = 'biblio_tema';
+    const leer = () => {
+      try {
+        return localStorage.getItem(CLAVE) || 'oscuro';
+      } catch (error) {
+        return 'oscuro';
+      }
+    };
+    const aplicar = (tema) => {
+      const valor = tema === 'oscuro' ? 'oscuro' : 'claro';
+      document.documentElement.dataset.tema = valor;
+      try {
+        localStorage.setItem(CLAVE, valor);
+      } catch (error) {
+        // Sin almacenamiento, el tema solo dura esta visita.
+      }
+      return valor;
+    };
+    return {
+      actual: () => (document.documentElement.dataset.tema === 'claro' ? 'claro' : 'oscuro'),
+      aplicar,
+      alternar: () => aplicar(leer() === 'oscuro' ? 'claro' : 'oscuro'),
+      iniciar: () => aplicar(leer())
+    };
+  })();
+
   return {
     crear, aviso, exito, error, alerta, errorApi,
     abrirModal, cerrarModal,
     fecha, fechaCorta, hoy, sumarDias,
-    insignia, portada, vacio, oTexto, campo, marcarErrores, desplazarA, crearSvg, ETIQUETAS
+    insignia, portada, tonoCategoria, vacio, oTexto, campo, marcarErrores, desplazarA, crearSvg, ETIQUETAS, Tema
   };
 })();

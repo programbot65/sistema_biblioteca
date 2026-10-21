@@ -8,12 +8,12 @@
  * servidor que reescriba las direcciones.
  *
  * La pantalla de inicio es la estanteria circular de libros (#/inicio). Las
- * demas rutas (#/panel, #/catalogo, #/prestamos, #/gestion) siguen siendo las
- * mismas secciones de siempre.
+ * demas rutas (#/catalogo, #/usuarios, #/prestamos) son las secciones de
+ * siempre.
  */
 
 window.App = (() => {
-  const VISTAS_POR_DEFECTO = 'panel';
+  const VISTAS_POR_DEFECTO = 'inicio';
   const contenido = () => document.getElementById('contenido');
 
   /** Convierte "#/catalogo?q=texto&limite=5" en {vista, parametros}. */
@@ -37,18 +37,9 @@ window.App = (() => {
     };
   }
 
-  function marcarNavegacion(vista) {
-    document.querySelectorAll('.navegacion__enlace').forEach((enlace) => {
-      const activo = enlace.dataset.vista === vista;
-      enlace.classList.toggle('activo', activo);
-      if (activo) enlace.setAttribute('aria-current', 'page');
-      else enlace.removeAttribute('aria-current');
-    });
-  }
-
   /**
    * El encabezado no muestra una fila de botones: solo indica en que seccion
-   * se esta y ofrece el camino de vuelta a la estanteria.
+   * esta y ofrece el camino de vuelta a la estanteria.
    */
   function actualizarEncabezado(vista, pantalla) {
     const volver = document.getElementById('volver-estanteria');
@@ -69,7 +60,6 @@ window.App = (() => {
     dibujarIconos();
     actualizarEstado();
   }
-
   /** Inserta los SVG del encabezado a partir del catalogo de iconos. */
   function dibujarIconos() {
     const aviso = document.querySelector('#boton-avisos .icono-boton__glifo');
@@ -77,21 +67,6 @@ window.App = (() => {
 
     const rol = document.querySelector('#rol-usuario .rol__icono');
     if (rol && !rol.firstChild) rol.append(UI.crearSvg(Iconos.persona));
-  }
-
-  /** Fecha actual del encabezado, generada dinámicamente en español. */
-  function pintarFecha() {
-    const nodo = document.getElementById('fecha-actual');
-    if (!nodo) return;
-    try {
-      const fecha = new Date().toLocaleDateString('es-EC', {
-        weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
-      });
-      nodo.textContent = fecha;
-      nodo.setAttribute('datetime', new Date().toISOString().slice(0, 10));
-    } catch (error) {
-      nodo.textContent = '';
-    }
   }
 
   /** Búsqueda global del encabezado: lleva al catálogo con el texto escrito. */
@@ -200,13 +175,11 @@ window.App = (() => {
 
     const pantalla = Vistas[vista];
     if (!pantalla || typeof pantalla.render !== 'function') {
-      marcarNavegacion(vista);
       actualizarEncabezado(vista, null);
       mostrarError(`La sección "${vista}" no existe en el sistema.`);
       return;
     }
 
-    marcarNavegacion(vista);
     actualizarEncabezado(vista, pantalla);
 
     try {
@@ -227,12 +200,25 @@ window.App = (() => {
     }
   }
 
+  /** Botón de tema claro/oscuro del encabezado. */
+  function conectarTema() {
+    const boton = document.getElementById('tema-boton');
+    if (!boton || boton.dataset.listo) return;
+    boton.dataset.listo = 'si';
+    const pintar = () => boton.setAttribute('data-tema', UI.Tema.actual());
+    pintar();
+    boton.addEventListener('click', () => {
+      pintar(UI.Tema.alternar());
+    });
+  }
+
   function iniciar() {
     if (!window.location.hash) {
       window.location.hash = `#/${VISTAS_POR_DEFECTO}`;
     }
-    pintarFecha();
+    UI.Tema.iniciar();
     conectarBusquedaGlobal();
+    conectarTema();
     window.addEventListener('hashchange', navegar);
     navegar();
   }

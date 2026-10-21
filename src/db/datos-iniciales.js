@@ -78,7 +78,7 @@ const PRESTAMOS_PRUEBA = [
     codigo: 'LIT-002',
     nombre: 'Ana Lucía Mero',
     cedula: '1712345678',
-    curso: '4to de Bachillerato',
+    curso: '2.º de Bachillerato',
     diasAtraso: 20,
     diasPrestamo: 7
   },
@@ -86,7 +86,7 @@ const PRESTAMOS_PRUEBA = [
     codigo: 'MAT-001',
     nombre: 'Carlos Pérez',
     cedula: '1712345679',
-    curso: '4to de Bachillerato',
+    curso: '2.º de Bachillerato',
     diasAtraso: 3,
     diasPrestamo: 7
   },
@@ -94,7 +94,7 @@ const PRESTAMOS_PRUEBA = [
     codigo: 'INF-001',
     nombre: 'María Fernanda Ríos',
     cedula: '2009876543',
-    curso: '3ro de Técnico',
+    curso: '10.º de EGB',
     diasAtraso: 1,
     diasPrestamo: 7
   },
@@ -102,7 +102,7 @@ const PRESTAMOS_PRUEBA = [
     codigo: 'CS-001',
     nombre: 'Diego Zamora',
     cedula: '1311122233',
-    curso: '5to de Bachillerato',
+    curso: '3.º de Bachillerato',
     diasAtraso: 30,
     diasPrestamo: 7,
     devueltoHace: 20
@@ -111,7 +111,7 @@ const PRESTAMOS_PRUEBA = [
     codigo: 'LEN-001',
     nombre: 'Ana Lucía Mero',
     cedula: '1712345678',
-    curso: '4to de Bachillerato',
+    curso: '2.º de Bachillerato',
     diasAtraso: 5,
     diasPrestamo: 7
   }

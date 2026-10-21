@@ -56,7 +56,7 @@ function sembrar() {
 
   const r = db.ejecutar(
     'INSERT INTO estudiantes (cedula, nombre, curso) VALUES (?, ?, ?)',
-    '1712345678', 'Ana Lucia Mero', '4to de Bachillerato'
+    '1712345678', 'Ana Lucia Mero', '2.º de Bachillerato'
   );
   const estudianteId = Number(r.lastInsertRowid);
 
@@ -84,7 +84,7 @@ function sembrar() {
   // Segundo estudiante con prestamos, para los carnés
   const r2 = db.ejecutar(
     'INSERT INTO estudiantes (cedula, nombre, curso) VALUES (?, ?, ?)',
-    '1311122233', 'Diego Zamora', '5to de Bachillerato'
+    '1311122233', 'Diego Zamora', '3.º de Bachillerato'
   );
   const estudiante2 = Number(r2.lastInsertRowid);
   db.ejecutar(
@@ -139,7 +139,7 @@ test.before(async () => {
   dom.window.fetch = (entrada, opciones) => fetch(new URL(entrada, base), opciones);
   dom.errores = errores;
 
-  await esperar((d) => d.querySelectorAll('.mesa .ficha').length > 0, 'el escritorio');
+  await esperar((d) => d.querySelectorAll('.cifras .cifra').length > 0, 'el escritorio');
 
   panel = await (await fetch(`${base}/api/panel`)).json();
 });
@@ -164,58 +164,79 @@ test('Ya no hay tarjetas de indicadores, grafico de barras ni tabla de prestamos
   assert.equal(doc().querySelectorAll('.lista-datos').length, 0);
 });
 
-test('La pantalla se compone de estaciones, no de una rejilla de tarjetas', () => {
+test('La pantalla de inicio es la estantería y el resumen vive aparte', async () => {
+  dom.window.location.hash = '#/inicio';
+  await esperar((d) => d.querySelector('.estanteria__anillo') !== null, 'la estanteria');
+
+  // El inicio es solo la estantería.
+  assert.ok(doc().querySelector('.estanteria__anillo'), 'la estantería abre el inicio');
+  assert.equal(doc().querySelectorAll('.cifras .cifra').length, 0);
+
+  // El resumen con las cifras reales está en su propia vista.
+  dom.window.location.hash = '#/panel';
+  await esperar((d) => d.querySelectorAll('.cifras .cifra').length > 0, 'el resumen');
+
+  assert.equal(doc().querySelectorAll('.cifras .cifra').length, 5);
+  assert.ok(doc().querySelector('.destacados'), 'la fila de destacados sigue en el resumen');
+});
+
+test('Los reportes reúnen las estaciones de detalle', async () => {
+  dom.window.location.hash = '#/reportes';
+  await esperar((d) => d.querySelector('.registro__columna') !== null, 'los reportes');
+
   const estaciones = doc().querySelectorAll('.estacion');
   assert.ok(estaciones.length >= 5, `se esperaban al menos 5 estaciones, hay ${estaciones.length}`);
 
   const titulos = Array.from(estaciones).map((e) => e.querySelector('.estacion__titulo').textContent);
-  assert.ok(titulos.includes('Mesa de entrada'));
   assert.ok(titulos.includes('Mesa de prestamos'));
   assert.ok(titulos.includes('Estanteria de los mas prestados'));
-  assert.ok(titulos.includes('Secciones de la biblioteca'));
   assert.ok(titulos.includes('Registro de prestamos'));
 });
 
 // =====================================================================
 // 2. La informacion sigue siendo real
 // =====================================================================
-test('Las seis fichas muestran exactamente las cifras del servidor', () => {
-  const resumen = panel.resumen;
-  const fichas = Array.from(doc().querySelectorAll('.ficha'));
+test('Las cifras muestran exactamente los datos del servidor', async () => {
+  dom.window.location.hash = '#/panel';
+  await esperar((d) => d.querySelectorAll('.cifras .cifra').length > 0, 'el escritorio');
 
-  const valores = fichas.map((ficha) => ficha.querySelector('.ficha__valor').textContent);
-  const etiquetas = fichas.map((ficha) => ficha.querySelector('.ficha__etiqueta').textContent);
+  const resumen = panel.resumen;
+  const cifras = Array.from(doc().querySelectorAll('.cifras .cifra'));
+
+  const valores = cifras.map((cifra) => cifra.querySelector('.cifra__valor').textContent);
+  const etiquetas = cifras.map((cifra) => cifra.querySelector('.cifra__etiqueta').textContent);
 
   assert.ok(valores.includes(String(resumen.disponibles)), 'debe estar los disponibles');
   assert.ok(valores.includes(String(resumen.prestados)), 'debe estar los prestados');
   assert.ok(valores.includes(String(resumen.atrasados)), 'debe estar los atrasados');
-  assert.ok(valores.includes(String(resumen.por_vencer)), 'debe estar los por vencer');
   assert.ok(valores.includes(String(resumen.titulos)), 'debe estar los titulos');
 
-  assert.ok(etiquetas.includes('disponibles'));
-  assert.ok(etiquetas.includes('atrasados'));
+  assert.ok(etiquetas.includes('Disponibles'));
+  assert.ok(etiquetas.includes('Atrasados'));
 });
 
-test('Las fichas cuelgan de un clip y se leen sin depender del color', () => {
-  for (const ficha of doc().querySelectorAll('.ficha')) {
-    assert.ok(ficha.querySelector('.ficha__clip'), 'cada ficha lleva su clip');
-    assert.ok(ficha.querySelector('.ficha__etiqueta').textContent.trim().length > 2,
-      'cada ficha tiene su etiqueta escrita');
-    assert.match(ficha.getAttribute('aria-label'), /: \d+/);
+test('Las cifras se leen sin depender del color', () => {
+  for (const cifra of doc().querySelectorAll('.cifras .cifra')) {
+    assert.ok(cifra.querySelector('.cifra__etiqueta').textContent.trim().length > 2,
+      'cada cifra tiene su etiqueta escrita');
+    assert.match(cifra.getAttribute('aria-label'), /: \d+/);
   }
 });
 
-test('La ficha de atrasados avisa con el color de alerta cuando hay atraso', () => {
+test('La cifra de atrasados avisa con el color de alerta cuando hay atraso', () => {
   const resumen = panel.resumen;
   assert.ok(resumen.atrasados > 0, 'la prueba necesita al menos un prestamo atrasado');
 
-  const ficha = Array.from(doc().querySelectorAll('.ficha')).find((f) =>
-    f.querySelector('.ficha__etiqueta').textContent === 'atrasados');
+  const cifra = Array.from(doc().querySelectorAll('.cifras .cifra')).find((c) =>
+    c.querySelector('.cifra__etiqueta').textContent === 'Atrasados');
 
-  assert.ok(ficha.classList.contains('ficha--teja'), 'la ficha de atrasados usa el tono de alerta');
+  assert.ok(cifra.classList.contains('cifra--alerta'), 'la cifra de atrasados usa el tono de alerta');
 });
 
-test('Los prestamos recientes aparecen como una pila de libros', () => {
+test('Los prestamos recientes aparecen como una pila de libros', async () => {
+  dom.window.location.hash = '#/reportes';
+  await esperar((d) => d.querySelector('.apilado__libro') !== null, 'la pila de prestamos');
+
   const pila = doc().querySelectorAll('.apilado__libro');
 
   assert.equal(pila.length, panel.ultimos_prestamos.length);
@@ -239,7 +260,10 @@ test('Los prestamos recientes aparecen como una pila de libros', () => {
   }
 });
 
-test('Los libros mas prestados se muestran como lomos sobre un estante', () => {
+test('Los libros mas prestados se muestran como lomos sobre un estante', async () => {
+  dom.window.location.hash = '#/reportes';
+  await esperar((d) => d.querySelector('.espina') !== null, 'los lomos');
+
   const lomos = doc().querySelectorAll('.espina');
   assert.ok(lomos.length > 0);
   assert.equal(lomos.length, panel.mas_prestados.length);
@@ -261,7 +285,16 @@ test('Los libros mas prestados se muestran como lomos sobre un estante', () => {
   }
 });
 
-test('Las categorias son compartimentos con su nombre y su disponibilidad', () => {
+test('Las categorias son compartimentos con su nombre y su disponibilidad', async () => {
+  dom.window.location.hash = '#/categorias';
+  await esperar(
+    (d) => {
+      const titulo = d.querySelector('.vista__titulo');
+      return titulo && titulo.textContent === 'Categorías' && d.querySelector('.compartimento') !== null;
+    },
+    'las secciones'
+  );
+
   const compartimentos = doc().querySelectorAll('.compartimento');
   assert.ok(compartimentos.length > 0);
 
@@ -278,7 +311,10 @@ test('Las categorias son compartimentos con su nombre y su disponibilidad', () =
   }
 });
 
-test('El registro de prestamos son las hojas de un cuaderno, con su rotulo de dia', () => {
+test('El registro de prestamos son las hojas de un cuaderno, con su rotulo de dia', async () => {
+  dom.window.location.hash = '#/reportes';
+  await esperar((d) => d.querySelector('.registro__columna') !== null, 'el registro');
+
   const columnas = doc().querySelectorAll('.registro__columna');
   assert.equal(columnas.length, panel.prestamos_por_dia.length);
   assert.equal(columnas.length, 14);
@@ -302,7 +338,10 @@ test('El registro de prestamos son las hojas de un cuaderno, con su rotulo de di
   void maximo;
 });
 
-test('Los estudiantes con prestamos activos aparecen como carnes', () => {
+test('Los estudiantes con prestamos activos aparecen como carnes', async () => {
+  dom.window.location.hash = '#/reportes';
+  await esperar((d) => d.querySelector('.carne') !== null, 'los carnes');
+
   const carnes = doc().querySelectorAll('.carne');
   assert.equal(carnes.length, panel.estudiantes_mas_activos.length);
 
@@ -313,30 +352,46 @@ test('Los estudiantes con prestamos activos aparecen como carnes', () => {
   }
 });
 
-test('Cada estacion explica de donde sale su informacion', () => {
+test('Cada estacion explica de donde sale su informacion', async () => {
+  dom.window.location.hash = '#/reportes';
+  await esperar((d) => d.querySelector('.registro__dia') !== null, 'el registro');
+
   const detalles = Array.from(doc().querySelectorAll('.estacion__detalle')).map((d) => d.textContent);
   const textoCompleto = detalles.join(' | ');
 
   assert.match(textoCompleto, /dia/, 'el registro debe decir cuantos dias cubre');
-  assert.match(textoCompleto, /disponibles \/ total/, 'las secciones deben explicar la cifra');
   assert.match(textoCompleto, /altura del lomo/, 'la estanteria debe explicar el criterio');
+
+  dom.window.location.hash = '#/categorias';
+  await esperar(
+    (d) => {
+      const titulo = d.querySelector('.vista__titulo');
+      return titulo && titulo.textContent === 'Categorías' && d.querySelector('.compartimento') !== null;
+    },
+    'las secciones'
+  );
+  const detalleSecciones = doc().querySelector('.estacion__detalle').textContent;
+  assert.match(detalleSecciones, /disponibles \/ total/, 'las secciones deben explicar la cifra');
 });
 
 // =====================================================================
 // 3. Navegacion desde el escritorio
 // =====================================================================
-test('La ficha de atrasados lleva a la lista de prestamos atrasados', async () => {
-  const ficha = Array.from(doc().querySelectorAll('.ficha')).find((f) =>
-    f.querySelector('.ficha__etiqueta').textContent === 'atrasados');
+test('La cifra de atrasados lleva a la lista de prestamos atrasados', async () => {
+  dom.window.location.hash = '#/panel';
+  await esperar((d) => d.querySelectorAll('.cifras .cifra').length > 0, 'el escritorio');
 
-  ficha.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+  const cifra = Array.from(doc().querySelectorAll('.cifras .cifra')).find((f) =>
+    f.querySelector('.cifra__etiqueta').textContent === 'Atrasados');
+
+  cifra.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
 
   await esperar((d) => d.querySelector('.tabla-envoltura') !== null, 'la lista de prestamos');
   assert.equal(dom.window.location.hash, '#/prestamos?situacion=atrasado');
 });
 
 test('Un libro de la pila lleva a los prestamos filtrados por su codigo', async () => {
-  dom.window.location.hash = '#/panel';
+  dom.window.location.hash = '#/reportes';
   await esperar((d) => d.querySelector('.apilado__libro') !== null, 'la pila de prestamos');
 
   const codigo = panel.ultimos_prestamos[0].codigo;
@@ -349,8 +404,14 @@ test('Un libro de la pila lleva a los prestamos filtrados por su codigo', async 
 });
 
 test('Un compartimento lleva al catalogo con el nombre de la seccion', async () => {
-  dom.window.location.hash = '#/panel';
-  await esperar((d) => d.querySelector('.compartimento') !== null, 'los compartimentos');
+  dom.window.location.hash = '#/categorias';
+  await esperar(
+    (d) => {
+      const titulo = d.querySelector('.vista__titulo');
+      return titulo && titulo.textContent === 'Categorías' && d.querySelector('.compartimento') !== null;
+    },
+    'los compartimentos'
+  );
 
   const nombre = doc().querySelector('.compartimento__nombre').textContent;
   doc().querySelector('.compartimento')
@@ -363,7 +424,7 @@ test('Un compartimento lleva al catalogo con el nombre de la seccion', async () 
 
 test('El encabezado muestra el estado del sistema y el aviso de atrasos', async () => {
   dom.window.location.hash = '#/panel';
-  await esperar((d) => d.querySelector('.mesa .ficha') !== null, 'el escritorio');
+  await esperar((d) => d.querySelector('.cifras .cifra') !== null, 'el escritorio');
 
   const estado = doc().getElementById('estado-sistema');
   const avisos = doc().getElementById('boton-avisos');

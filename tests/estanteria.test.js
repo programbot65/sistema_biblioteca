@@ -474,10 +474,10 @@ test.after(() => {
 
 test('La portada dibuja un libro por cada sección existente', () => {
   const libros = doc().querySelectorAll('.estanteria__anillo .libro');
-  assert.equal(libros.length, 4);
+  assert.equal(libros.length, 3);
 
   const rutas = Array.from(libros).map((libro) => libro.dataset.vista);
-  assert.deepEqual(rutas, ['panel', 'catalogo', 'prestamos', 'gestion']);
+  assert.deepEqual(rutas, ['catalogo', 'usuarios', 'prestamos']);
 });
 
 test('Cada libro tiene nombre accesible, lomo, paginas y tapa', () => {
@@ -499,7 +499,7 @@ test('El motor aplica una posición 3D distinta a cada libro', () => {
   const libros = Array.from(doc().querySelectorAll('.estanteria__anillo .libro'));
   const transformaciones = libros.map((libro) => libro.style.transform);
 
-  assert.equal(new Set(transformaciones).size, 4, 'los cuatro libros deben estar en sitios distintos');
+  assert.equal(new Set(transformaciones).size, 3, 'los tres libros deben estar en sitios distintos');
   for (const transformacion of transformaciones) {
     assert.match(transformacion, /translate3d\(/);
     assert.match(transformacion, /scale\(/);
@@ -510,7 +510,7 @@ test('El motor aplica una posición 3D distinta a cada libro', () => {
 });
 
 test('El núcleo central muestra la sección del libro que está al frente', async () => {
-  assert.equal(doc().querySelector('.nucleo__seccion').textContent, 'Panel');
+  assert.equal(doc().querySelector('.nucleo__seccion').textContent, 'Catalogo');
   assert.equal(doc().querySelectorAll('.nucleo__paso.activo').length, 1);
 
   dom.window.Navegacion; // el motor sigue montado
@@ -559,10 +559,10 @@ test('El botón del encabezado permite volver a la estantería', async () => {
 
   volver.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
 
-  await esperar((d) => d.querySelectorAll('.estanteria__anillo .libro').length === 4,
+  await esperar((d) => d.querySelectorAll('.estanteria__anillo .libro').length === 3,
     'que vuelva la estanteria');
 
-  assert.equal(doc().querySelectorAll('.estanteria__anillo .libro').length, 4);
+  assert.equal(doc().querySelectorAll('.estanteria__anillo .libro').length, 3);
   assert.equal(doc().getElementById('volver-estanteria').hidden, true,
     'en la estanteria no hace falta el botón de volver');
 });
@@ -578,17 +578,18 @@ test('Al volver a la estantería se recuerda el último libro abierto', async ()
 });
 
 test('La navegación accesible sigue disponible aunque el carrusel no se use', () => {
-  const enlaces = doc().querySelectorAll('.navegacion__enlace');
-  const rutas = Array.from(enlaces).map((enlace) => enlace.getAttribute('href'));
+  // La estantería es el menú: sus libros son las secciones del sistema.
+  const libros = doc().querySelectorAll('.estanteria__anillo .libro');
+  const rutas = Array.from(libros).map((libro) => libro.getAttribute('href') || `#/${libro.dataset.vista}`);
 
-  assert.deepEqual(rutas, ['#/inicio', '#/panel', '#/catalogo', '#/prestamos', '#/gestion']);
+  assert.deepEqual(rutas, ['#/catalogo', '#/usuarios', '#/prestamos']);
 });
 
 test('Las secciones existentes siguen funcionando tras el rediseño', async () => {
   for (const [ruta, comprobacion] of [
-    ['#/panel', '.mesa .ficha'],
+    ['#/inicio', '.estanteria__anillo'],
     ['#/prestamos', 'form'],
-    ['#/gestion', '.acceso']
+    ['#/gestion', '.tarjeta--pausa']
   ]) {
     dom.window.location.hash = ruta;
     await esperar((d) => d.querySelector(comprobacion) !== null, `la seccion ${ruta}`);
@@ -602,8 +603,8 @@ test('Salir de la estantería detiene el motor, sin dejar el bucle corriendo', a
 
   const estanteria = dom.window.Vistas.inicio.estanteria;
 
-  dom.window.location.hash = '#/panel';
-  await esperar((d) => d.querySelector('.mesa .ficha') !== null, 'el panel');
+  dom.window.location.hash = '#/catalogo';
+  await esperar((d) => d.querySelector('.rejilla-libros') !== null, 'el catalogo');
 
   assert.ok(estanteria, 'se conserva la referencia para poder inspeccionarla');
   // Tras navegar, el motor anterior ya no escribe sobre libros que no existen.

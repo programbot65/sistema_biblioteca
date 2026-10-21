@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    Estantería interactiva — edición "Noche Digital" (holograma)
    --------------------------------------------------------------------------
    Solo la parte visual. El cálculo de posiciones y los gestos viven en
@@ -8,21 +8,19 @@
    ========================================================================== */
 
 /* ---------- 1. Zona y anillo ---------- */
+/* La zona no es un marco: no tiene borde ni caja. Solo el charco de luz del
+   suelo, para que los libros floten en el vacio y se vean bien. */
 .estanteria-zona {
   position: relative;
   width: 100%;
-  height: clamp(460px, 70vh, 660px);
+  height: clamp(420px, 64vh, 620px);
   overflow: hidden;
-  border-radius: 24px;
+  border-radius: 26px;
   touch-action: pan-y;
   background:
-    radial-gradient(46% 36% at 50% 42%, rgba(72, 229, 255, .08), transparent 65%),
-    radial-gradient(40% 34% at 50% 42%, rgba(149, 112, 255, .09), transparent 65%),
-    linear-gradient(180deg, rgba(20, 29, 54, .5), rgba(8, 11, 24, .55));
-  border: 1px solid rgba(160, 200, 255, .13);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 18px 60px rgba(2, 6, 20, .5);
-  -webkit-backdrop-filter: saturate(150%) blur(10px);
-  backdrop-filter: saturate(150%) blur(10px);
+    radial-gradient(40% 26% at 50% 74%, rgba(72, 229, 255, .14), transparent 70%),
+    radial-gradient(32% 20% at 50% 76%, rgba(149, 112, 255, .13), transparent 72%),
+    radial-gradient(60% 46% at 50% 30%, rgba(26, 40, 82, .38), transparent 76%);
 }
 
 .estanteria {
@@ -45,7 +43,7 @@
 
 .estanteria__anillo > * { pointer-events: auto; }
 
-/* Halo decorativo que sugiere la corona de un reloj inteligente */
+/* Halo decorativo: una órbita luminosa que se pierde en la distancia */
 .estanteria__corona {
   position: absolute;
   left: 50%;
@@ -54,8 +52,8 @@
   height: 340px;
   margin: -170px 0 0 -170px;
   border-radius: 50%;
-  border: 1px dashed rgba(72, 229, 255, .35);
-  box-shadow: 0 0 40px rgba(72, 229, 255, .08), inset 0 0 40px rgba(149, 112, 255, .06);
+  border: 1px solid rgba(72, 229, 255, .16);
+  box-shadow: 0 0 60px rgba(72, 229, 255, .07), inset 0 0 60px rgba(149, 112, 255, .05);
   transform: translateZ(-260px);
   pointer-events: none;
   animation: girar-lento 46s linear infinite;
@@ -64,9 +62,9 @@
 .estanteria__corona::before {
   content: "";
   position: absolute;
-  inset: 34px;
+  inset: 46px;
   border-radius: 50%;
-  border: 1px solid rgba(149, 112, 255, .3);
+  border: 1px solid rgba(149, 112, 255, .12);
 }
 
 @keyframes girar-lento {
@@ -74,91 +72,67 @@
 }
 
 /* ---------- 2. Núcleo central ---------- */
+/* Flota arriba del anillo para que el nombre de la sección nunca quede
+   tapado por el libro del frente. */
 .estanteria__nucleo {
   position: absolute;
   left: 50%;
-  top: 40%;
-  width: 200px;
-  height: 200px;
-  margin: -100px 0 0 -100px;
+  top: 7%;
+  width: 132px;
+  height: 132px;
+  margin: -66px 0 0 -66px;
   border-radius: 50%;
   display: grid;
   place-content: center;
   justify-items: center;
-  gap: .15rem;
+  gap: .45rem;
   text-align: center;
   padding: 1rem;
   transform: translateZ(-60px);
   z-index: 5;
   pointer-events: none;
   background:
-    radial-gradient(circle at 32% 26%, rgba(72, 229, 255, .22), rgba(20, 29, 54, .88) 58%, rgba(10, 14, 30, .94) 100%);
-  border: 1px solid rgba(72, 229, 255, .35);
+    radial-gradient(circle at 34% 28%, rgba(72, 229, 255, .16), rgba(12, 18, 38, .8) 62%, rgba(8, 11, 24, .9) 100%);
+  border: 1px solid rgba(72, 229, 255, .22);
   box-shadow:
-    0 0 50px rgba(72, 229, 255, .14),
-    0 20px 46px rgba(0, 0, 0, .5),
-    inset 0 1px 0 rgba(255, 255, 255, .14);
-  -webkit-backdrop-filter: saturate(180%) blur(16px);
-  backdrop-filter: saturate(180%) blur(16px);
+    0 0 40px rgba(72, 229, 255, .1),
+    0 16px 40px rgba(0, 0, 0, .45),
+    inset 0 1px 0 rgba(255, 255, 255, .1);
+  -webkit-backdrop-filter: saturate(170%) blur(14px);
+  backdrop-filter: saturate(170%) blur(14px);
   transition: box-shadow .4s ease;
 }
 
 .nucleo__icono {
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
   color: #06121F;
   background: linear-gradient(140deg, var(--cian, #48E5FF), var(--violeta, #9570FF));
-  box-shadow: 0 0 22px rgba(72, 229, 255, .45);
-  margin-bottom: .35rem;
+  box-shadow: 0 0 18px rgba(72, 229, 255, .35);
 }
 
-.nucleo__marca {
-  font-size: .66rem;
-  font-weight: 800;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--texto-suave, #9AA8C7);
-}
-
-.nucleo__titulo {
-  font-size: 1.06rem;
-  font-weight: 850;
-  letter-spacing: -.01em;
-  line-height: 1.1;
-  background: linear-gradient(90deg, #fff, var(--cian, #48E5FF));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
+.nucleo__icono svg { width: 17px; height: 17px; }
 
 .nucleo__seccion {
-  font-size: .84rem;
+  font-size: .82rem;
   font-weight: 700;
   color: var(--cian, #48E5FF);
   min-height: 1.1rem;
   text-shadow: 0 0 14px rgba(72, 229, 255, .5);
 }
 
-.nucleo__pista {
-  font-size: .66rem;
-  color: var(--texto-suave, #9AA8C7);
-  letter-spacing: .04em;
-  margin-top: .2rem;
-}
-
 /* Anillo de progreso que muestra cuántos libros hay en el carrusel */
 .nucleo__pasos {
   display: flex;
   gap: .3rem;
-  margin-top: .45rem;
 }
 
 .nucleo__paso {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   background: rgba(154, 168, 199, .35);
   transition: background .3s ease, transform .3s ease, width .3s ease;
@@ -167,7 +141,7 @@
 .nucleo__paso.activo {
   background: var(--cian, #48E5FF);
   box-shadow: 0 0 10px rgba(72, 229, 255, .8);
-  width: 14px;
+  width: 12px;
   border-radius: 3px;
 }
 
@@ -495,85 +469,63 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  margin-top: .8rem;
+  gap: .9rem;
+  margin-top: .9rem;
   flex-wrap: wrap;
 }
 
 .estanteria__control {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  border: 1px solid rgba(72, 229, 255, .35);
-  background: rgba(14, 20, 38, .7);
-  -webkit-backdrop-filter: saturate(150%) blur(12px);
-  backdrop-filter: saturate(150%) blur(12px);
-  color: var(--cian, #48E5FF);
+  border: 1px solid rgba(160, 200, 255, .16);
+  background: rgba(14, 20, 38, .55);
+  color: var(--texto-suave, #9AA8C7);
   display: grid;
   place-items: center;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, .45), 0 0 18px rgba(72, 229, 255, .1);
-  transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+  transition: transform .18s ease, color .18s ease, border-color .18s ease, background .18s ease;
 }
-.estanteria__control svg { width: 20px; height: 20px; }
+.estanteria__control svg { width: 17px; height: 17px; }
 
 .estanteria__control:hover {
-  background: linear-gradient(140deg, var(--cian, #48E5FF), var(--violeta, #9570FF));
-  color: #06121F;
-  transform: scale(1.07);
-  box-shadow: 0 8px 26px rgba(72, 229, 255, .35);
+  color: var(--cian, #48E5FF);
+  border-color: rgba(72, 229, 255, .45);
+  background: rgba(72, 229, 255, .08);
+  transform: scale(1.08);
 }
 
 .estanteria__control:active { transform: scale(.97); }
 
-.estanteria__pistas {
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  font-size: .78rem;
-  color: var(--texto-suave, #9AA8C7);
+/* El resumen de la biblioteca, al final de la portada. */
+/* Portada: encabezado minimo sobre la estantería */
+.portada {
+  max-width: 940px;
+  margin-inline: auto;
+  display: grid;
+  gap: .4rem;
+  justify-items: center;
 }
-
-.pista {
-  display: inline-flex;
-  align-items: center;
-  gap: .35rem;
-}
-.pista svg { width: 16px; height: 16px; color: var(--cian, #48E5FF); }
-
-.pista kbd {
-  font: inherit;
-  font-size: .7rem;
-  font-weight: 700;
-  padding: .1rem .4rem;
-  border-radius: 5px;
-  border: 1px solid rgba(160, 200, 255, .25);
-  background: rgba(14, 20, 38, .8);
-  color: var(--texto, #F3F6FF);
-}
-
-/* Texto de apoyo para quien usa lector de pantalla */
-.estanteria__resumen {
-  margin-top: .9rem;
-  text-align: center;
-  font-size: .84rem;
-  color: var(--texto-suave, #9AA8C7);
-  max-width: 60ch;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* Portada: encabezado de bienvenida sobre la estantería */
 .portada__presentacion {
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.1rem;
+  display: grid;
+  gap: .2rem;
+  justify-items: center;
+}
+.portada__antetitulo {
+  margin: 0;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--texto-tenue, #6C7A99);
 }
 .portada__titulo {
-  font-size: clamp(1.5rem, 3.4vw, 2.1rem);
+  margin: 0;
+  font-size: clamp(1.4rem, 3.2vw, 2rem);
   font-weight: 850;
-  margin-bottom: .15rem;
+  letter-spacing: -.015em;
 }
 .portada__titulo span {
   background: linear-gradient(90deg, var(--cian, #48E5FF), var(--violeta, #9570FF));
@@ -581,41 +533,40 @@
   background-clip: text;
   color: transparent;
 }
-.portada__descripcion { color: var(--texto-suave, #9AA8C7); font-size: .93rem; }
+.portada__descripcion {
+  margin: 0;
+  color: var(--texto-suave, #9AA8C7);
+  font-size: .9rem;
+}
 
+/* El resumen de la biblioteca, al final de la portada. */
 /* ---------- 6. Responsive ---------- */
 @media (max-width: 1000px) {
   .estanteria .libro { --ancho: 158px; --alto: 214px; }
-  .estanteria__nucleo { width: 176px; height: 176px; margin: -88px 0 0 -88px; }
+  .estanteria__nucleo { width: 118px; height: 118px; margin: -59px 0 0 -59px; }
   .estanteria__corona { width: 300px; height: 300px; margin: -150px 0 0 -150px; }
-  .nucleo__titulo { font-size: .98rem; }
 }
 
 @media (max-width: 760px) {
-  .estanteria-zona { height: clamp(420px, 64vh, 540px); }
+  .estanteria-zona { height: clamp(400px, 60vh, 520px); }
   .estanteria .libro { --ancho: 124px; --alto: 169px; --grosor: 11px; }
-  .estanteria__nucleo { width: 148px; height: 148px; margin: -74px 0 0 -74px; top: 38%; }
-  .nucleo__icono { width: 38px; height: 38px; border-radius: 12px; }
-  .nucleo__icono svg { width: 20px; height: 20px; }
-  .nucleo__marca { font-size: .58rem; }
-  .nucleo__titulo { font-size: .88rem; }
-  .nucleo__seccion { font-size: .76rem; }
-  .nucleo__pista { display: none; }
+  .estanteria__nucleo { width: 104px; height: 104px; margin: -52px 0 0 -52px; top: 6%; }
+  .nucleo__icono { width: 26px; height: 26px; border-radius: 9px; }
+  .nucleo__icono svg { width: 15px; height: 15px; }
+  .nucleo__seccion { font-size: .74rem; }
   .estanteria__corona { width: 236px; height: 236px; margin: -118px 0 0 -118px; top: 38%; }
   .estanteria .libro__titulo { font-size: .8rem; }
   .estanteria .libro__interior { padding: .7rem .55rem; }
   .estanteria .libro__interior-titulo { font-size: .82rem; }
   .estanteria .libro__interior-pie { font-size: .66rem; }
-  .estanteria__pistas { display: none; }
 }
 
 @media (max-width: 460px) {
   .estanteria .libro { --ancho: 108px; --alto: 147px; --grosor: 9px; }
-  .estanteria-zona { height: 400px; }
-  .estanteria__nucleo { width: 122px; height: 122px; margin: -61px 0 0 -61px; }
-  .nucleo__titulo { font-size: .8rem; }
+  .estanteria-zona { height: 380px; }
+  .estanteria__nucleo { width: 92px; height: 92px; margin: -46px 0 0 -46px; top: 5%; }
   .estanteria .libro__marca, .estanteria .libro__codigo { display: none; }
-  .estanteria__control { width: 44px; height: 44px; }
+  .estanteria__control { width: 38px; height: 38px; }
 }
 
 /* En pantallas sin hover (móvil) la apertura se muestra al enfocar */

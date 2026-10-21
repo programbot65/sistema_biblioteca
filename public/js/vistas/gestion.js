@@ -13,11 +13,33 @@ Vistas.gestion = {
   categorias: [],
 
   async render(contenedor) {
+    // Registro temporalmente en pausa: se muestra un aviso elegante y no se
+    // exponen formularios. Para rehabilitarlo, ponga `registroDeLibros: true`
+    // en `public/js/vistas.js`; el código de administración sigue intacto.
+    if (!window.BibliotecaConfig || !window.BibliotecaConfig.registroDeLibros) {
+      contenedor.replaceChildren(crearTextoVista(), this.construirPausa());
+      return;
+    }
     if (!Api.claveAdmin.valor) {
       contenedor.replaceChildren(crearTextoVista(), this.construirAcceso());
       return;
     }
     await this.mostrarFormulario();
+  },
+
+  /** Aviso elegante mientras el registro de libros está en preparación. */
+  construirPausa() {
+    const { crear } = UI;
+    return crear('section', { clase: 'tarjeta tarjeta--pausa' }, [
+      crear('h3', { clase: 'tarjeta__titulo', texto: 'Registro en preparación' }),
+      crear('p', {
+        texto: 'Estamos organizando y registrando los libros de la biblioteca escolar. Muy pronto esta sección permitirá dar de alta el inventario completo.'
+      }),
+      crear('p', { clase: 'texto-suave', texto: 'Mientras tanto, puede explorar el catálogo público.' }),
+      crear('div', { clase: 'fila-botones' }, [
+        crear('a', { clase: 'boton boton--secundario', href: '#/catalogo', texto: 'Ver el catálogo' })
+      ])
+    ]);
   },
 
   construirAviso() {

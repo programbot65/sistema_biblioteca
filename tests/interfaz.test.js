@@ -63,9 +63,9 @@ test.before(async () => {
   const porCodigo = (codigo) => librosPorCodigo.find((libro) => libro.codigo === codigo).id;
 
   const estudiantes = [
-    ['1712345678', 'Ana Lucía Mero', '4to de Bachillerato'],
-    ['1311122233', 'Diego Zamora', '5to de Bachillerato'],
-    ['2009876543', 'María Fernanda Ríos', '3ro de Técnico']
+    ['1712345678', 'Ana Lucía Mero', '2.º de Bachillerato'],
+    ['1311122233', 'Diego Zamora', '3.º de Bachillerato'],
+    ['2009876543', 'María Fernanda Ríos', '10.º de EGB']
   ].map(([cedula, nombre, curso]) => {
     const resultado = db.ejecutar(
       'INSERT INTO estudiantes (cedula, nombre, curso) VALUES (?, ?, ?)',
@@ -116,8 +116,8 @@ test.before(async () => {
   dom.window.fetch = (entrada, opciones) => fetch(new URL(entrada, base), opciones);
   dom.errores = errores;
 
-  // Se espera a que termine de cargar el panel principal.
-  await esperar((doc) => doc.querySelectorAll('.mesa .ficha').length > 0, 'el panel principal');
+  // Se espera a que termine de cargar el inicio.
+  await esperar((doc) => doc.querySelectorAll('.cifras .cifra').length > 0, 'el inicio');
 });
 
 test.after(() => {
@@ -128,25 +128,101 @@ test.after(() => {
 });
 
 // ---------------------------------------------------------------------
-test('La pagina carga el escritorio con las cifras de la biblioteca', () => {
+test('La pagina carga el inicio con las cifras de la biblioteca', () => {
   const documento = dom.window.document;
 
-  // Las cifras ya no son tarjetas con bordes: son fichas de papel.
-  assert.equal(documento.querySelectorAll('.ficha').length, 6);
-  assert.ok(texto().includes('Mesa de entrada'));
-  assert.ok(texto().includes('disponibles'));
-  assert.ok(texto().includes('atrasados'));
+  // Las cifras son una sola linea, sin tarjetas ni adornos.
+  const cifras = Array.from(documento.querySelectorAll('.cifras .cifra'));
+  assert.equal(cifras.length, 5);
+  assert.ok(texto().toLowerCase().includes('disponibles'));
+  assert.ok(texto().toLowerCase().includes('atrasados'));
+
+  for (const cifra of cifras) {
+    assert.ok(cifra.querySelector('.cifra__valor').textContent.trim());
+    assert.ok(cifra.querySelector('.cifra__etiqueta').textContent.trim().length > 2);
+  }
 });
 
-test('El panel dibuja el registro de prestamos de los ultimos dias', () => {
+test('La estantería es la pantalla de inicio', async () => {
+  dom.window.location.hash = '#/inicio';
+
+  await esperar((doc) => doc.querySelector('.estanteria__anillo') !== null, 'la estantería');
+
+  const documento = dom.window.document;
+  assert.ok(texto().includes('Biblioteca UEEA'));
+
+  // La estantería es el menu: un libro por sección.
+  const libros = Array.from(documento.querySelectorAll('.estanteria__anillo .libro'));
+  assert.ok(libros.length >= 3, 'debe haber un libro por sección');
+
+  // Y en el inicio no hay nada más: ni resumen, ni panel lateral.
+  assert.equal(documento.querySelectorAll('.portada__resumen').length, 0);
+  assert.equal(documento.querySelectorAll('.cifras .cifra').length, 0);
+  assert.equal(documento.querySelectorAll('.sidebar').length, 0);
+});
+
+test('Los libros de la estantería son las secciones del sistema', async () => {
+  dom.window.location.hash = '#/inicio';
+
+  await esperar((doc) => doc.querySelectorAll('.estanteria__anillo .libro').length > 0, 'la estantería');
+
+  const documento = dom.window.document;
+  const libros = Array.from(documento.querySelectorAll('.estanteria__anillo .libro'));
+  assert.deepEqual(
+    libros.map((l) => l.dataset.vista),
+    ['catalogo', 'usuarios', 'prestamos']
+  );
+
+  // Al elegir un libro se abre su sección.
+  const libro = documento.querySelector('.estanteria__anillo .libro[data-vista="catalogo"]');
+  libro.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+
+  await esperar((doc) => doc.querySelector('.rejilla-libros') !== null, 'el catalogo');
+  assert.equal(dom.window.location.hash, '#/catalogo');
+});
+
+test('El inicio integra las categorías de la biblioteca', async () => {
+  dom.window.location.hash = '#/panel';
+
+  await esperar((doc) => doc.querySelector('.seccion') !== null, 'las categorías del inicio');
+
+  const secciones = dom.window.document.querySelectorAll('.seccion');
+  assert.ok(secciones.length > 0);
+
+  const panel = await (await fetch(`${base}/api/panel`)).json();
+  const conLibros = panel.por_categoria.filter((categoria) => categoria.ejemplares > 0);
+  assert.equal(secciones.length, conLibros.length);
+
+  for (const celda of secciones) {
+    assert.ok(celda.querySelector('.seccion__nombre').textContent.trim());
+    assert.match(celda.getAttribute('href'), /^#\/catalogo\?q=/);
+  }
+});
+
+test('El panel dibuja el registro de prestamos de los ultimos dias', async () => {
+  dom.window.location.hash = '#/reportes';
+  await esperar((doc) => doc.querySelector('.registro__hoja') !== null, 'el registro');
+
   const documento = dom.window.document;
   assert.equal(documento.querySelectorAll('.registro__hoja').length, 14);
 });
 
-test('La navegacion marca la seccion activa', async () => {
-  const activo = dom.window.document.querySelector('.navegacion__enlace.activo');
-  assert.ok(activo);
-  assert.equal(activo.dataset.vista, 'panel');
+test('El encabezado indica la sección y ofrece volver a la estantería', async () => {
+  dom.window.location.hash = '#/catalogo';
+  await esperar((doc) => doc.querySelectorAll('.rejilla-libros .libro').length > 0, 'el catalogo');
+
+  const documento = dom.window.document;
+
+  // No hay menu lateral: la estantería es el menú.
+  assert.equal(documento.querySelectorAll('.sidebar').length, 0);
+
+  // El encabezado dice en que sección estamos y ofrece el camino de vuelta.
+  const subtitulo = documento.getElementById('subtitulo-seccion');
+  assert.ok(subtitulo.textContent.trim().length > 0);
+
+  const volver = documento.getElementById('volver-estanteria');
+  assert.equal(volver.hidden, false);
+  assert.equal(volver.getAttribute('href'), '#/inicio');
 });
 
 test('La vista del catalogo muestra los libros', async () => {
@@ -226,17 +302,34 @@ test('El filtro de situacion muestra los prestamos atrasados', async () => {
 });
 
 test('El formulario de prestamos avisa si no se elige libro', () => {
-  const avisos = [];
-  dom.window.UI.alerta = (mensaje) => avisos.push(mensaje);
+  const documento = dom.window.document;
 
-  dom.window.document
+  documento
     .querySelector('form button[type="submit"]')
     .dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
 
-  assert.ok(avisos.length === 1);
-  assert.match(avisos[0], /libro/i);
+  // El error se marca en el propio buscador de libros.
+  const campo = documento.querySelector('.campo--error');
+  assert.ok(campo, 'debe marcarse el campo con error');
+  assert.match(campo.querySelector('.campo__error').textContent, /libro/i);
+  assert.equal(campo.querySelector('input').name, 'libro_busqueda');
+});
 
-  dom.window.UI.alerta = (mensaje) => UI.aviso(mensaje, 'alerta');
+test('Los datos de un estudiante conocido se completan solos', async () => {
+  const documento = dom.window.document;
+
+  // Se escribe la cedula de una estudiante que ya tiene prestamos.
+  const cedula = documento.querySelector('[name="cedula"]');
+  cedula.value = '1712345678';
+  cedula.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+
+  await esperar(
+    (doc) => doc.querySelector('[name="nombre"]').value.trim().length > 0,
+    'que se completen los datos del estudiante'
+  );
+
+  assert.equal(documento.querySelector('[name="nombre"]').value, 'Ana Lucía Mero');
+  assert.equal(documento.querySelector('[name="curso"]').value, '2.º de Bachillerato');
 });
 
 test('El formulario de prestamos registra un prestamo completo', async () => {
@@ -251,7 +344,7 @@ test('El formulario de prestamos registra un prestamo completo', async () => {
   // Se llenan los datos del estudiante.
   documento.querySelector('[name="nombre"]').value = 'Estudiante Interfaz';
   documento.querySelector('[name="cedula"]').value = '0911122233';
-  documento.querySelector('[name="curso"]').value = '2do de Bachillerato';
+  documento.querySelector('[name="curso"]').value = '8.º de EGB';
   documento.querySelector('[name="dias_prestamo"]').value = '7';
 
   // Se busca un libro y se elige de las sugerencias.
@@ -357,34 +450,103 @@ test('Desde la lista se registra la devolucion de un libro', async () => {
   assert.equal(prestamos.length, 2); // el de prueba y el devuelto ahora
 });
 
-test('La vista de gestion pide la clave del encargado', async () => {
+test('La vista de gestion muestra el aviso de registro en preparación', async () => {
   dom.window.location.hash = '#/gestion';
 
-  await esperar((doc) => doc.querySelector('.acceso') !== null, 'el formulario de acceso');
+  await esperar((doc) => doc.body.textContent.includes('Registro en preparación'), 'el aviso de pausa');
 
-  assert.ok(texto().includes('Ingrese la clave'));
-  assert.ok(dom.window.document.querySelector('[name="clave"]'));
+  assert.ok(texto().includes('Registro en preparación'));
+  // Sin formularios de registro, edición ni eliminación a la vista.
+  assert.equal(dom.window.document.querySelector('[name="titulo"]'), null);
+  assert.equal(dom.window.document.querySelector('[name="clave"]'), null);
 });
 
-test('Con la clave correcta se muestra el formulario de registro de libros', async () => {
-  dom.window.Api.claveAdmin.guardar('clave-de-prueba');
-  await dom.window.App.navegar();
+test('El catálogo vacío no ofrece registrar libros mientras dura la pausa', async () => {
+  dom.window.location.hash = '#/catalogo';
+  await esperar(
+    (doc) => doc.querySelectorAll('.rejilla-libros .libro').length > 0,
+    'las tarjetas de libros del catalogo'
+  );
 
-  await esperar((doc) => doc.querySelector('[name="titulo"]') !== null, 'el formulario de libro');
+  // Se simula el catálogo vacío para comprobar el mensaje de espera.
+  const vista = dom.window.Vistas.catalogo;
+  vista.estado.q = '';
+  vista.estado.categoria = '';
+  vista.estado.estado = '';
+  vista.estado.offset = 0;
+  vista.pintarResultados({ libros: [], total: 0, offset: 0 });
 
-  assert.ok(texto().includes('Registrar un libro nuevo'));
-  assert.ok(texto().includes('Categorías'));
-  assert.ok(dom.window.document.querySelector('[name="codigo"]'));
-  assert.ok(dom.window.document.querySelector('[name="cantidad"]'));
+  await esperar((doc) => doc.querySelector('.vacio--catalogo') !== null, 'el aviso de catálogo vacío');
+
+  assert.ok(texto().includes('Todavía no hay libros registrados'));
+  assert.ok(texto().includes('aparecerán aquí'));
+  assert.equal(dom.window.document.querySelector('.vacio--catalogo .boton'), null);
 });
 
-test('El listado de libros de gestion muestra la tabla con acciones', async () => {
-  await esperar((doc) => doc.querySelector('.tabla-envoltura table') !== null, 'la tabla de libros');
+test('El botón de tema alterna entre claro y oscuro', () => {
+  const documento = dom.window.document;
+  const boton = documento.querySelector('#tema-boton');
+  assert.ok(boton);
+  const inicial = documento.documentElement.dataset.tema;
+  boton.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+  assert.notEqual(documento.documentElement.dataset.tema, inicial);
+  boton.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+  assert.equal(documento.documentElement.dataset.tema, inicial);
+});
 
-  const botones = dom.window.document.querySelectorAll('button');
-  const textos = Array.from(botones).map((boton) => boton.textContent);
-  assert.ok(textos.includes('Editar'));
-  assert.ok(textos.includes('Dar de baja'));
+test('No hay menú lateral: la estantería es el menú', () => {
+  const documento = dom.window.document;
+  assert.equal(documento.querySelectorAll('.sidebar').length, 0);
+  assert.equal(documento.querySelectorAll('#navegacion').length, 0);
+});
+
+test('Las categorías muestran secciones reales con su disponibilidad', async () => {
+  dom.window.location.hash = '#/categorias';
+
+  await esperar((doc) => doc.querySelector('.compartimento') !== null, 'las secciones');
+
+  const primero = dom.window.document.querySelector('.compartimento');
+  assert.ok(primero.querySelector('.compartimento__nombre').textContent.trim());
+  assert.match(primero.querySelector('.compartimento__cifra').textContent, /\d+\/\d+/);
+  assert.match(primero.getAttribute('href'), /^#\/catalogo\?q=/);
+});
+
+test('Los usuarios se buscan sin exponer la cédula y tienen historial real', async () => {
+  dom.window.location.hash = '#/usuarios';
+
+  await esperar((doc) => doc.querySelector('.usuario') !== null, 'la lista de usuarios');
+
+  const documento = dom.window.document;
+  const tarjetas = documento.querySelectorAll('.usuario');
+  assert.ok(tarjetas.length > 0);
+  assert.ok(documento.querySelector('.usuario__nombre').textContent.trim());
+  assert.ok(!texto().includes('1712345678'), 'la cédula no se muestra en el listado');
+
+  documento.querySelector('[name="q"]').value = 'Ana';
+  documento.querySelector('.buscador')
+    .dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }));
+
+  await esperar(
+    (doc) => Array.from(doc.querySelectorAll('.usuario__nombre')).some((n) => n.textContent.includes('Ana')),
+    'el filtro por nombre'
+  );
+
+  documento.querySelector('.usuario .boton')
+    .dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+
+  await esperar((doc) => doc.querySelector('#modal .atencion__item') !== null, 'el historial real');
+  assert.ok(texto().includes('Historial de'));
+});
+
+test('Los reportes reúnen el detalle real de la biblioteca', async () => {
+  dom.window.location.hash = '#/reportes';
+
+  await esperar((doc) => doc.querySelector('.registro__columna') !== null, 'los reportes');
+
+  const documento = dom.window.document;
+  assert.ok(documento.querySelector('.apilado__libro'));
+  assert.ok(documento.querySelector('.espina'));
+  assert.ok(documento.querySelector('.carne'));
 });
 
 test('Una ruta desconocida muestra un mensaje de pagina no encontrada', async () => {

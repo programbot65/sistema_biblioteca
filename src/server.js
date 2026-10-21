@@ -67,6 +67,29 @@ function iniciar() {
     console.log(`  Préstamo:    ${config.diasPrestamo} días por defecto`);
     console.log(`  Clave admin: ${process.env.ADMIN_KEY ? '(definida por variable de entorno)' : '(valor por defecto del proyecto)'}`);
     console.log('='.repeat(58));
+    console.log('  Para detenerlo presione Ctrl + C');
+  });
+
+  // Si el puerto ya esta ocupado casi siempre es otra copia del servidor
+  // que quedo abierta. Se avisa con un mensaje claro en vez de un error
+  // técnico que asusta.
+  servidor.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error('');
+      console.error('  No se pudo iniciar el servidor.');
+      console.error(`  El puerto ${config.puerto} ya está siendo usado por otra aplicación.`);
+      console.error('');
+      console.error('  Qué hacer:');
+      console.error('    1. Cierra la otra ventana del sistema que sigue abierta');
+      console.error('       (o ejecuta: taskkill /F /IM node.exe)');
+      console.error('    2. O usa otro puerto, por ejemplo:');
+      console.error(`       set PORT=3001 && npm run dev`);
+      console.error('');
+      process.exit(1);
+    }
+
+    console.error('  Error al iniciar el servidor:', error.message);
+    process.exit(1);
   });
 
   const cerrar = (senal) => {

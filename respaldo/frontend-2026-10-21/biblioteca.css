@@ -1,0 +1,112 @@
+/* ==========================================================================
+   Panel principal (escritorio de la biblioteca)
+   --------------------------------------------------------------------------
+   Diseño simple: tarjetas de cifras, listas y tablas de uso corriente.
+   Los datos salen de GET /api/panel; nada se calcula ni se inventa aquí.
+   ========================================================================== */
+
+:root {
+  --transicion-panel: .18s ease;
+}
+
+.panel { display: grid; gap: 1.2rem; }
+.panel__doble { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; align-items: start; }
+
+/* ---------- Tarjetas de cifras ---------- */
+.rejilla-indicadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: .9rem;
+}
+
+.indicador {
+  display: grid; gap: .3rem;
+  padding: 1rem;
+  border: 1px solid var(--borde);
+  border-left: 4px solid var(--primario);
+  border-radius: var(--radio);
+  background: var(--superficie);
+  box-shadow: var(--sombra);
+  text-decoration: none;
+  color: var(--texto);
+  transition: border-color var(--transicion-panel), box-shadow var(--transicion-panel);
+}
+.indicador:hover, .indicador:focus-visible { border-color: var(--primario); box-shadow: var(--sombra-alta); }
+.indicador[aria-disabled="true"] { cursor: default; }
+.indicador__fila { display: flex; align-items: center; gap: .6rem; }
+.indicador__icono {
+  display: grid; place-items: center; width: 38px; height: 38px;
+  border-radius: var(--radio-s); flex-shrink: 0;
+  background: var(--primario-suave); color: var(--primario);
+}
+.indicador__icono svg { width: 20px; height: 20px; }
+.indicador__valor { font-size: 1.7rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.indicador__etiqueta { font-size: .85rem; font-weight: 700; color: var(--texto); }
+.indicador__detalle { font-size: .78rem; color: var(--texto-suave); }
+
+.indicador--verde { border-left-color: var(--exito); }
+.indicador--verde .indicador__icono { background: var(--exito-suave); color: var(--exito); }
+.indicador--azul { border-left-color: var(--primario); }
+.indicador--azul .indicador__icono { background: var(--primario-suave); color: var(--primario); }
+.indicador--violeta { border-left-color: #7c3aed; }
+.indicador--violeta .indicador__icono { background: #f5f3ff; color: #7c3aed; }
+.indicador--naranja { border-left-color: var(--aviso); }
+.indicador--naranja .indicador__icono { background: var(--aviso-suave); color: var(--aviso); }
+.indicador--teja { border-left-color: var(--error); }
+.indicador--teja .indicador__icono { background: var(--error-suave); color: var(--error); }
+.indicador--pizarra { border-left-color: var(--texto-tenue); }
+.indicador--pizarra .indicador__icono { background: var(--superficie-2); color: var(--texto-suave); }
+
+/* ---------- Lista de atención (atrasados / por vencer) ---------- */
+.lista-atencion { display: grid; gap: .5rem; }
+.atencion__item {
+  display: flex; align-items: center; gap: .7rem; flex-wrap: wrap;
+  padding: .6rem .75rem; border-radius: var(--radio-s); text-decoration: none; color: var(--texto);
+  background: var(--superficie-2); border: 1px solid var(--borde);
+}
+.atencion__item:hover { border-color: var(--aviso); }
+.atencion__item--critico:hover { border-color: var(--error); }
+.atencion__codigo { font-family: Consolas, monospace; font-size: .75rem; color: var(--primario); background: var(--primario-suave); border: 1px solid #bfdbfe; padding: .1rem .4rem; border-radius: 5px; }
+.atencion__titulo { font-weight: 600; font-size: .9rem; }
+.atencion__detalle { font-size: .8rem; color: var(--texto-suave); margin-left: auto; }
+
+/* ---------- Listas simples (libros más prestados, categorías, usuarios) ---------- */
+.lista-simple { display: grid; gap: .5rem; }
+.lista-simple__item {
+  display: flex; align-items: center; gap: .7rem; flex-wrap: wrap;
+  padding: .55rem .7rem; border-radius: var(--radio-s);
+  background: var(--superficie-2); border: 1px solid var(--borde);
+  text-decoration: none; color: var(--texto);
+}
+.lista-simple__item:hover { border-color: var(--primario); }
+.lista-simple__indice { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--primario-suave); color: var(--primario); font-size: .75rem; font-weight: 800; flex-shrink: 0; }
+.lista-simple__titulo { font-weight: 600; font-size: .9rem; }
+.lista-simple__detalle { font-size: .78rem; color: var(--texto-suave); margin-left: auto; }
+
+/* ---------- Barra de disponibilidad ---------- */
+.barra { height: 8px; background: var(--superficie-2); border-radius: 999px; overflow: hidden; margin-top: .3rem; border: 1px solid var(--borde); }
+.barra__relleno { display: block; height: 100%; background: var(--primario); transition: width .4s ease; }
+
+/* ---------- Tabla de préstamos recientes ---------- */
+.tabla-recientes td.acciones { gap: .35rem; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .panel__doble { grid-template-columns: 1fr; gap: 1rem; }
+}
+
+@media (max-width: 620px) {
+  .rejilla-indicadores { grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+  .indicador { padding: .8rem .7rem; }
+  .indicador__valor { font-size: 1.4rem; }
+  .indicador__detalle { display: none; }
+  .atencion__detalle { margin-left: 0; width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indicador, .barra__relleno { transition: none !important; }
+}
+
+@media print {
+  .indicador, .tarjeta { break-inside: avoid; border-color: #999; }
+}

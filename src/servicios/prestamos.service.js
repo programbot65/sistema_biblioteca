@@ -24,17 +24,12 @@ class ErrorNegocio extends Error {
 }
 
 const CURSOS_VALIDOS = [
-  '1ro de Bachillerato',
-  '2do de Bachillerato',
-  '3ro de Bachillerato',
-  '4to de Bachillerato',
-  '5to de Bachillerato',
-  '6to de Bachillerato',
-  '1ro de Técnico',
-  '2do de Técnico',
-  '3ro de Técnico',
-  '4to de Técnico',
-  'Otros'
+  '8.º de EGB',
+  '9.º de EGB',
+  '10.º de EGB',
+  '1.º de Bachillerato',
+  '2.º de Bachillerato',
+  '3.º de Bachillerato'
 ];
 
 /** Anade el estado calculado (vigente, atrasado, etc.) que usa la interfaz. */

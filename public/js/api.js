@@ -14,6 +14,9 @@ window.Api = (() => {
     constructor(mensaje, estado, detalles) {
       super(mensaje);
       this.name = 'ErrorApi';
+      // `super()` solo deja el texto en `message`. Sin esta linea, los avisos
+      // de error se mostraban vacios en pantalla.
+      this.mensaje = mensaje;
       this.estado = estado;
       this.detalles = detalles || [];
     }

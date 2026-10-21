@@ -252,11 +252,27 @@ Vistas.catalogo = {
     const contenedor = this.contenedorResultados;
 
     if (!datos.libros.length) {
-      contenedor.replaceChildren(
-        UI.vacio(this.estado.q
-          ? `No se encontraron libros para "${this.estado.q}". Pruebe con otras palabras o limpie los filtros.`
-          : 'No hay libros que cumplan los filtros seleccionados. Pruebe limpiar los filtros.')
-      );
+      const sinFiltros = !this.estado.q && !this.estado.categoria && !this.estado.estado;
+      const catalogoVacio = (typeof datos.total !== 'undefined' ? datos.total : 1) === 0 && sinFiltros;
+
+      if (catalogoVacio) {
+        // Catálogo sin ningún libro: mensaje elegante. El botón de registro
+        // solo aparece cuando el registro está habilitado (ver vistas.js).
+        const registroHabilitado = window.BibliotecaConfig && window.BibliotecaConfig.registroDeLibros;
+        contenedor.replaceChildren(crear('div', { clase: 'vacio vacio--catalogo' }, [
+          crear('p', { clase: 'vacio__titulo', texto: 'Todavía no hay libros registrados' }),
+          crear('p', { texto: 'Cuando se agreguen los libros de la biblioteca, aparecerán aquí.' }),
+          registroHabilitado
+            ? crear('a', { clase: 'boton boton--primario', href: '#/gestion', texto: 'Registrar el primer libro' })
+            : null
+        ]));
+      } else {
+        contenedor.replaceChildren(
+          UI.vacio(this.estado.q
+            ? `No se encontraron libros para "${this.estado.q}". Pruebe con otras palabras o limpie los filtros.`
+            : 'No hay libros que cumplan los filtros seleccionados. Pruebe limpiar los filtros.')
+        );
+      }
       if (this.conteoResultados) this.conteoResultados.textContent = '0 resultados';
       return;
     }
@@ -336,15 +352,17 @@ Vistas.catalogo = {
   tarjetaLibro(libro) {
     const { crear } = UI;
     const estadoTexto = (UI.ETIQUETAS && UI.ETIQUETAS[libro.estado]) || libro.estado;
+    const tono = UI.tonoCategoria(libro.categoria);
 
     return crear('button', {
-      clase: 'libro',
+      clase: `libro libro--${tono}`,
       type: 'button',
       'aria-label': `${libro.titulo}, de ${libro.autor}. Código ${libro.codigo}. ${estadoTexto}. Abrir ficha.`,
       onclick: () => this.verDetalle(libro.id)
     }, [
       UI.portada(libro),
       crear('div', { clase: 'libro__cuerpo' }, [
+        crear('span', { clase: `libro__categoria libro__categoria--${tono}`, texto: libro.categoria || 'Sin categoría' }),
         crear('span', { clase: 'libro__titulo', texto: libro.titulo }),
         crear('span', { clase: 'libro__autor', texto: libro.autor }),
         crear('div', { clase: 'libro__pie' }, [
@@ -438,21 +456,18 @@ Vistas.catalogo = {
         clase: 'texto-suave',
         texto: 'Sugerencias por categoria, autor y palabras del titulo.'
       }));
-      piezas.push(crear('div', { clase: 'estrellas' }, libro.relacionados.map((sugerido) => {
-        const tarjeta = crear('button', {
-          clase: 'libro',
+      piezas.push(crear('div', { clase: 'sugerencias' }, libro.relacionados.map((sugerido) =>
+        crear('button', {
+          clase: `sugerencia sugerencia--${UI.tonoCategoria(sugerido.categoria)}`,
           type: 'button',
-          onclick: () => this.verDetalle(sugerido.id)
+          onclick: () => this.verDetalle(sugerido.id),
+          'aria-label': `${sugerido.titulo}. ${sugerido.motivo_recomendacion}. Abrir ficha.`
         }, [
-          UI.portada(sugerido, 'celda-libro__miniatura'),
-          crear('div', { clase: 'libro__cuerpo' }, [
-            crear('span', { clase: 'libro__titulo', texto: sugerido.titulo }),
-            crear('span', { clase: 'texto-suave', texto: sugerido.motivo_recomendacion })
-          ])
-        ]);
-        tarjeta.style.width = '100%';
-        return tarjeta;
-      })));
+          crear('span', { clase: 'sugerencia__punto', 'aria-hidden': 'true' }),
+          crear('span', { clase: 'sugerencia__titulo', texto: sugerido.titulo }),
+          crear('span', { clase: 'sugerencia__motivo', texto: sugerido.motivo_recomendacion })
+        ])
+      )));
     }
 
     return crear('div', {}, piezas);

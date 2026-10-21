@@ -3,10 +3,10 @@
 /**
  * Portada: la estanteria circular de libros.
  *
- * Esta vista es la nueva pantalla de inicio del sistema. Cada seccion
- * existente se representa como un libro colocado sobre un anillo en 3D.
- * Al elegir un libro se abre la seccion correspondiente, sin cambiar ninguna
- * de las rutas ni del funcionamiento ya implementados.
+ * Esta vista es la pantalla de inicio del sistema: un menu de libros
+ * giratorio donde cada seccion del sistema es un libro. Al elegir un libro
+ * se abre la seccion correspondiente, sin cambiar ninguna de las rutas ni del
+ * funcionamiento ya implementados.
  *
  * Reparto de responsabilidades:
  *   - este archivo: que libros existen, como se ve cada uno y a donde llevan.
@@ -26,16 +26,12 @@ Vistas.inicio = {
     /** Los iconos viven en `js/iconos.js`, compartidos con el panel. */
   iconoDe(clave) { return Iconos[clave]; },
 
-  /** Las secciones existentes del sistema, una por libro. */
+  /**
+   * Las secciones a las que se puede abrir desde la estanteria.
+   * El propio inicio no aparece: la estanteria ya es la portada, asi que
+   * sus libros son las demas secciones del sistema.
+   */
   secciones: [
-    {
-      ruta: 'panel',
-      etiqueta: 'Panel',
-      titulo: 'PANEL',
-      descripcion: 'Resumen de libros, prestamos y atrasados',
-      icono: 'panel',
-      tono: 'azul'
-    },
     {
       ruta: 'catalogo',
       etiqueta: 'Catalogo',
@@ -45,20 +41,20 @@ Vistas.inicio = {
       tono: 'violeta'
     },
     {
+      ruta: 'usuarios',
+      etiqueta: 'Usuarios',
+      titulo: 'USUARIOS',
+      descripcion: 'Estudiantes de la biblioteca y su historial',
+      icono: 'persona',
+      tono: 'verde'
+    },
+    {
       ruta: 'prestamos',
       etiqueta: 'Prestamos',
       titulo: 'PRESTAMOS',
       descripcion: 'Registrar prestamos, devoluciones y renovaciones',
       icono: 'prestamos',
       tono: 'naranja'
-    },
-    {
-      ruta: 'gestion',
-      etiqueta: 'Gestion',
-      titulo: 'GESTION',
-      descripcion: 'Alta, edicion y baja de libros del catalogo',
-      icono: 'gestion',
-      tono: 'verde'
     }
   ],
 
@@ -91,21 +87,16 @@ Vistas.inicio = {
     const zona = crear('div', { clase: 'estanteria-zona' }, [this.escena]);
 
     const bloque = crear('section', { clase: 'portada' }, [
-      crear('div', { clase: 'portada__presentacion' }, [
+      crear('header', { clase: 'portada__presentacion' }, [
+        crear('p', { clase: 'portada__antetitulo', texto: 'Biblioteca UEEA' }),
         crear('h2', { clase: 'portada__titulo' }, [
-          'La biblioteca en ',
-          crear('span', { texto: 'órbita' })
-        ]),
-        crear('p', { clase: 'portada__descripcion', texto: 'Gire el carrusel y elija un libro para abrir cada sección del sistema.' })
+          'Elija una ',
+          crear('span', { texto: 'seccion' })
+        ])
       ]),
       crear('h2', { clase: 'oculto', texto: 'Estanteria de secciones del sistema' }),
       zona,
-      this.crearControles(),
-      crear('p', {
-        clase: 'estanteria__resumen',
-        id: 'pistas-estanteria',
-        texto: 'Cada libro es una seccion del sistema. Gire el carrusel para ver todas las secciones y haga clic en un libro para abrirlo.'
-      })
+      this.crearControles()
     ]);
 
     contenedor.replaceChildren(bloque);
@@ -178,6 +169,7 @@ Vistas.inicio = {
     }, [escena]);
   },
 
+  /** Nucleo minimo: solo el nombre de la seccion y los pasos. */
   crearNucleo() {
     const { crear } = UI;
 
@@ -187,15 +179,13 @@ Vistas.inicio = {
     ));
 
     return crear('div', { clase: 'estanteria__nucleo' }, [
-      crear('span', { clase: 'nucleo__icono' }, [UI.crearSvg(this.iconoDe("biblioteca"))]),
-      crear('span', { clase: 'nucleo__marca', texto: 'Unidad Educativa' }),
-      crear('span', { clase: 'nucleo__titulo', texto: 'Biblioteca UEEA' }),
+      crear('span', { clase: 'nucleo__icono' }, [UI.crearSvg(this.iconoDe('biblioteca'))]),
       this.elementosNucleo.seccion,
-      crear('span', { clase: 'nucleo__pista', texto: 'Gire y elija un libro' }),
       this.elementosNucleo.pasos
     ]);
   },
 
+  /** Solo dos flechas: el resto de la ayuda estorba. */
   crearControles() {
     const { crear } = UI;
 
@@ -213,24 +203,7 @@ Vistas.inicio = {
       onclick: () => this.estanteria && this.estanteria.avanzar(1)
     }, [UI.crearSvg(this.iconoDe("derecha"))]);
 
-    const pistas = crear('div', { clase: 'estanteria__pistas' }, [
-      crear('span', { clase: 'pista' }, [
-        UI.crearSvg(this.iconoDe("rueda")),
-        'Rueda para girar'
-      ]),
-      crear('span', { clase: 'pista' }, [
-        UI.crearSvg(this.iconoDe("mano")),
-        'Arrastre para girar'
-      ]),
-      crear('span', { clase: 'pista' }, [
-        UI.crearSvg(this.iconoDe("teclado")),
-        'Flechas ',
-        crear('kbd', { texto: '←' }),
-        crear('kbd', { texto: '→' })
-      ])
-    ]);
-
-    return crear('div', { clase: 'estanteria__barra' }, [this.controlAnterior, pistas, this.controlSiguiente]);
+    return crear('div', { clase: 'estanteria__barra' }, [this.controlAnterior, this.controlSiguiente]);
   },
 
   /** Muestra en el nucleo el titulo del libro que esta al frente. */

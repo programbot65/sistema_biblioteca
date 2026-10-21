@@ -13,7 +13,7 @@
  */
 
 window.Piezas = (() => {
-  const { crear, crearSvg } = window.UI;
+  const { crear, crearSvg, tonoCategoria } = window.UI;
 
   /** Tonos de la identidad visual. Todos comparten la misma paleta. */
   const TONES = ['azul', 'violeta', 'verde', 'naranja', 'pizarra', 'teja'];
@@ -37,9 +37,11 @@ window.Piezas = (() => {
     return crear('div', atributos, [
       crear('span', { clase: 'ficha__clip', 'aria-hidden': 'true' }),
       crear('span', { clase: 'ficha__icono' }, [crearSvg(icono, { clase: 'ficha__svg' })]),
-      crear('span', { clase: 'ficha__valor', texto: valor }),
-      crear('span', { clase: 'ficha__etiqueta', texto: etiqueta }),
-      detalle ? crear('span', { clase: 'ficha__detalle', texto: detalle }) : null
+      crear('span', { clase: 'ficha__textos' }, [
+        crear('span', { clase: 'ficha__valor', texto: valor }),
+        crear('span', { clase: 'ficha__etiqueta', texto: etiqueta }),
+        detalle ? crear('span', { clase: 'ficha__detalle', texto: detalle }) : null
+      ])
     ]);
   }
 
@@ -115,9 +117,10 @@ window.Piezas = (() => {
     const total = Number(categoria.ejemplares) || 0;
     const libres = Number(categoria.disponibles) || 0;
     const porcentaje = total ? Math.round((libres / total) * 100) : 0;
+    const tono = tonoCategoria(categoria.categoria);
 
     return crear('a', {
-      clase: 'compartimento',
+      clase: `compartimento compartimento--${tono}`,
       href: `#/catalogo?q=${encodeURIComponent(categoria.categoria)}`,
       'aria-label': `${categoria.categoria}: ${libres} disponibles de ${total} ejemplares. Ver en el catálogo.`,
       title: `${categoria.categoria} — ${libres} de ${total} disponibles`
@@ -201,5 +204,26 @@ window.Piezas = (() => {
     ]);
   }
 
-  return { ficha, libroApilado, libroEspina, compartimento, hoja, carné, vacio, estacion, TONES };
+  /**
+   * Etiqueta compacta de una seccion de la biblioteca.
+   * Muestra el nombre y cuantos ejemplares quedan disponibles, y lleva al
+   * catalogo filtrado por esa categoria.
+   */
+  function seccion({ categoria }) {
+    const total = Number(categoria.ejemplares) || 0;
+    const libres = Number(categoria.disponibles) || 0;
+    const tono = tonoCategoria(categoria.categoria);
+
+    return crear('a', {
+      clase: `seccion seccion--${tono}`,
+      href: `#/catalogo?q=${encodeURIComponent(categoria.categoria)}`,
+      'aria-label': `${categoria.categoria}: ${libres} disponibles de ${total} ejemplares. Ver en el catálogo.`,
+      title: `${categoria.categoria} — ${libres} de ${total} disponibles`
+    }, [
+      crear('span', { clase: 'seccion__nombre', texto: categoria.categoria }),
+      crear('span', { clase: 'seccion__cifra', texto: `${libres}/${total}` })
+    ]);
+  }
+
+  return { ficha, libroApilado, libroEspina, compartimento, seccion, hoja, carné, vacio, estacion, TONES };
 })();

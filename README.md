@@ -42,7 +42,27 @@ npm start
 
 Abra en el navegador: **<http://localhost:3000>**
 
-Para detener el servidor presione `Ctrl + C`.
+Para detener el servidor presione `Ctrl + C` en la misma ventana.
+
+### Si el servidor no arranca
+
+El mensaje `EADDRINUSE: address already in use :::3000` significa que hay
+**otra copia del sistema abierta** que sigue usando el puerto 3000. Se
+resuelve así:
+
+```powershell
+# 1. Cerrar la otra ventana del sistema que quedo abierta, o:
+taskkill /F /IM node.exe
+
+# 2. Volver a arrancar
+npm run dev
+```
+
+O, si se quiere usar otro puerto:
+
+```powershell
+set PORT=3001 && npm run dev
+```
 
 ### Comandos disponibles
 
@@ -50,7 +70,7 @@ Para detener el servidor presione `Ctrl + C`.
 |---------|----------------|
 | `npm start` | Inicia el sistema. |
 | `npm run dev` | Inicia el sistema y reinicia solo al guardar cambios. |
-| `npm test` | Ejecuta las 100 pruebas automáticas del proyecto. |
+| `npm test` | Ejecuta las 109 pruebas automáticas del proyecto. |
 | `npm run db:migrate` | Crea la base de datos y las tablas (no borra datos). |
 | `npm run db:seed` | Carga los datos de prueba si el catálogo está vacío. |
 | `npm run db:reset` | **Borra** la base de datos y la vuelve a crear con datos de prueba. |
@@ -64,7 +84,7 @@ Para detener el servidor presione `Ctrl + C`.
 |----------|-------------------|-------------|
 | `PORT` | `3000` | Puerto del servidor. |
 | `DB_PATH` | `data/biblioteca.db` | Ubicación del archivo de base de datos. |
-| `ADMIN_KEY` | `ueea2026` | Clave del encargado de biblioteca. |
+| `ADMIN_KEY` | `ueea2026` | Contraseña privada del encargado (ver sección 3.1). |
 
 Ejemplo en Windows PowerShell:
 
@@ -73,22 +93,52 @@ $env:ADMIN_KEY = "clave-que-elija-el-encargado"
 npm start
 ```
 
+### 3.1. Registro de libros en pausa temporal
+
+Mientras se recopila el inventario real, el registro, la edición y la
+eliminación de libros están **ocultos en la interfaz**: la sección de
+Administración muestra un aviso de «Registro en preparación» y el catálogo
+vacío no ofrece botón de registro. Todo el código de administración se
+conserva intacto.
+
+- **Rehabilitar:** ponga `registroDeLibros: true` en `public/js/vistas.js`
+  (`window.BibliotecaConfig`) y recargue. No hay que desarrollar nada más.
+- **Volver a pausar:** devuelva el valor a `false`.
+
 ---
 
-## 3. Navegación: barra lateral + estantería
+## 3. Navegación: la estantería es el menú
 
-La aplicación usa una **barra lateral de cristal** con cuatro secciones
-principales: **Panel principal**, **Catálogo**, **Préstamos** y
-**Administración**, cada una con su icono y su indicador luminoso de sección
-activa. En teléfonos la barra se convierte en una **barra inferior** con las
-mismas cuatro secciones. La ruta `#/inicio` (estantería) sigue existiendo
-como acceso secundario: un enlace discreto sobre el menú y el botón
-«Estantería» del encabezado llevan a ella.
+Al entrar en `http://localhost:3000` lo primero que aparece es la
+**estantería circular**: un anillo de libros flotando en un vacío oscuro.
+Cada libro es una sección del sistema y se abre con un clic. **No hay barra
+lateral**: la estantería es el menú, y el encabezado ofrece el camino de
+vuelta con el botón «Estantería».
 
-La pantalla de inicio (`http://localhost:3000`) es además una **estantería
-circular de libros** con acabado holográfico. Cada sección del sistema es un
-libro colocado sobre un anillo en 3D, alrededor del núcleo central con el
-nombre de la biblioteca.
+La barra superior reúne la **búsqueda global** (que lleva al catálogo), el
+estado del sistema, los avisos y el **selector de tema claro/oscuro**.
+
+### La estantería
+
+| Gesto | Resultado |
+|-------|-----------|
+| Rueda del ratón | Gira el carrusel de un libro al siguiente, sin saltarse pasos. |
+| Arrastrar con el ratón o el dedo | Giro libre; al soltar, el anillo se frena con inercia y se alinea solo. |
+| Flechas ← → | Gira el carrusel con el teclado. |
+| `Inicio` / `Fin` | Lleva al primer o al último libro. |
+| Pasar el ratón por un libro | El libro se acerca, crece y **se abre**, mostrando su icono y descripción. |
+| Clic en un libro | Lo centra y abre la sección. |
+| Botones `‹` `›` | Giran el carrusel (útil en tableta y teléfono). |
+
+El diseño es **sobrio**: un antetítulo, un título y la estantería. El núcleo
+central solo muestra el **nombre de la sección** que está al frente y los
+puntos de progreso; el resto de adornos se quitaron. La escena **no es un
+marco**: no tiene borde ni caja, solo el charco de luz del suelo, para que los
+libros se vean bien.
+
+Debajo de la estantería no hay nada más. El resumen con las cifras, las
+secciones de la biblioteca, los préstamos que necesitan atención y los libros
+destacados vive en su propia vista (`#/panel`).
 
 ```
                         Gestión
@@ -97,18 +147,6 @@ nombre de la biblioteca.
                           ╲
                         Panel
 ```
-
-### Gestos
-
-| Gesto | Resultado |
-|-------|-----------|
-| Rueda del ratón | Gira el carrusel de un libro al siguiente. |
-| Arrastrar con el ratón o el dedo | Giro libre; al soltar, el anillo se frena con inercia y se alinea solo. |
-| Flechas ← → | Gira el carrusel con el teclado. |
-| `Inicio` / `Fin` | Lleva al primer o al último libro. |
-| Pasar el ratón por un libro | El libro se acerca, crece y **se abre**, mostrando su icono y descripción. |
-| Clic en un libro | Lo centra y abre la sección. |
-| Botones `‹` `›` bajo la estantería | Giran el carrusel (útil en tableta y teléfono). |
 
 ### Detalles de la experiencia
 
@@ -153,35 +191,38 @@ teléfono, y avisa si alguno se saliera de la zona o se solapara mal.
 
 ---
 
-## 4. El escritorio de la biblioteca (panel)
+## 4. El inicio de la biblioteca
 
-El panel ya **no es un dashboard**. No hay tarjetas con bordes, ni gráficos de
-barras, ni tablas, ni barras de porcentaje. La información se presenta como los
-objetos de una biblioteca real:
+El resumen (`#/panel`) es **sobrio y minimalista**. No hay tarjetas con
+bordes, ni gráficos de barras, ni tablas, ni barras de porcentaje. Solo lo
+que hace falta para saber cómo está la biblioteca:
 
-| Antes (dashboard) | Ahora (escritorio) |
-|-------------------|--------------------|
-| Tarjeta «Libros disponibles» | **Ficha de cristal** con clip luminoso y cifra animada |
-| Tarjeta «Préstamos atrasados» | Ficha que cambia a tono de alerta si hay atrasos |
-| Gráfico de barras de 14 días | **Hojas de un cuaderno** con su rótulo de día |
+| Antes (dashboard) | Ahora (inicio) |
+|-------------------|----------------|
+| Tarjeta «Libros disponibles» | **Renglón de cifras**, con la cifra y su nombre |
+| Tarjeta «Préstamos atrasados» | La cifra de atrasados se pinta de alerta si los hay |
+| Menú de secciones en la barra lateral | **La estantería**: un libro por sección, en 3D |
+| Gráfico de barras de 14 días | **Hojas de un cuaderno** con su rótulo de día (en Reportes) |
 | Tabla de préstamos recientes | **Pila de libros** sobre la mesa, cada uno inclinado |
-| Barra de porcentaje por categoría | **Compartimentos** con su rótulo y su relleno |
+| Barra de porcentaje por categoría | **Etiquetas** con la disponibilidad de cada sección |
 | Lista de libros más prestados | **Lomos en una estantería**, la altura = veces prestado |
 | Lista de estudiantes activos | **Carnés** apoyados en el borde de la mesa |
 | — | **Estado del sistema** y **avisos** en el encabezado |
 
 Todo sale de `GET /api/panel`: no se calcula ni se inventa ningún dato nuevo.
-Cada ficha, libro, lomo y compartimento **es un enlace o un botón** que lleva a
-la sección correspondiente ya filtrada (por ejemplo, la ficha de atrasados abre
-los préstamos atrasados; un lomo abre su libro en el catálogo).
 
-Para no saturar la vista, el panel muestra primero lo esencial (cifras,
-atención inmediata, préstamos recientes y accesos directos) y agrupa el resto
-—pulso, más prestados, secciones, registro por día, estudiantes y
-recientes— dentro del plegable **«Estadísticas detalladas»**. Todo sigue en
-su sección y a un clic, sin eliminar funciones.
+El resumen muestra, en este orden: el **renglón de cifras**, las **secciones
+de la biblioteca**, lo que **necesita atención** y los **libros destacados**.
+Cada cifra, etiqueta y pendiente **es un enlace** que lleva a la sección
+correspondiente ya filtrada (por ejemplo, la cifra de atrasados abre los
+préstamos atrasados).
 
-Cuando no hay información, cada estación muestra un estado vacío sobrio en lugar
+El detalle restante vive en sus secciones: **Usuarios** (búsqueda por nombre e
+historial, sin exponer cédulas) y **Reportes** (avisos, disponibilidad,
+movimientos, más prestados, actividad por día, estudiantes activos y
+novedades), cuyas rutas siguen en pie aunque ya no aparezcan en el menú.
+
+Cuando no hay información, cada bloque muestra un estado vacío sobrio en lugar
 de un gráfico vacío.
 
 ### Fondo y tema «Noche Digital»
@@ -217,14 +258,31 @@ volver a la estantería.
 
 ### 5.2 Préstamos y devoluciones (encargado)
 
-1. En **Préstamos**, escriba el nombre, la cédula y el curso del estudiante.
-2. Busque el libro por título, autor o código y selecciónelo de la lista.
-3. Indique cuántos días tiene el plazo y presione **Registrar préstamo**.
-   El sistema calcula solo la fecha límite.
-4. Cuando el estudiante devuelva el libro, presione **Devuelto** en la fila
-   correspondiente y confirme la fecha.
-5. **Renovar** extiende el plazo una vez, si las reglas de la institución lo
-   permiten.
+El formulario está dividido en **tres grupos**, en el orden en que se usa:
+
+1. **Libro** — escriba el título, el autor o el código y elija de la lista.
+2. **Estudiante** — nombre completo, cédula y curso.
+3. **Plazo** — días de préstamo y fecha. El sistema calcula solo la fecha límite.
+
+Presione **Registrar préstamo**. Para devolver un libro, presione
+**Devuelto** en la fila correspondiente y confirme la fecha; **Renovar**
+extiende el plazo una vez, si las reglas de la institución lo permiten.
+
+#### Los datos del estudiante se completan solos
+
+Si el estudiante ya tiene préstamos registrados, **no hay que volver a
+escribir su información**:
+
+- Al escribir la **cédula** (o el nombre) aparecen los estudiantes ya
+  conocidos; al elegir uno se rellenan nombre, cédula y curso.
+- Si solo hay **un** estudiante que coincide, sus datos se completan
+  automáticamente.
+- Tras registrar un préstamo, los datos del estudiante **se conservan** en el
+  formulario: el siguiente libro para el mismo estudiante se presta sin
+  escribir nada.
+- Si un curso quedó mal escrito, se **corrige** aquí y el cambio queda
+  guardado: el servidor actualiza la ficha del estudiante al registrar el
+  préstamo, así que no se repite el error en los siguientes.
 
 Reglas que el sistema aplica automáticamente:
 
@@ -235,7 +293,8 @@ Reglas que el sistema aplica automáticamente:
 
 ### 5.3 Gestión (encargado, con clave)
 
-- Entrar con la clave (por defecto `ueea2026`) y modificarla con `ADMIN_KEY`.
+- Registrar libros cuando el inventario esté listo (ver sección 3.1 para
+  habilitar el registro) y modificar la clave con `ADMIN_KEY`.
 - Registrar libros nuevos: código, título, autor, categoría, año, cantidad de
   ejemplares y descripción.
 - **Editar** la información de un libro o **darlo de baja** (la baja es lógica:
@@ -286,7 +345,7 @@ Biblioteca/
 │   ├── css/
 │   │   ├── estilos.css       Estilo general del sistema
 │   │   ├── estanteria.css    Navegación circular de libros
-│   │   └── biblioteca.css    El escritorio de la biblioteca (panel)
+│   │   └── biblioteca.css    Las piezas del escritorio
 │   └── js/
 │       ├── api.js            Cliente de la API
 │       ├── iconos.js         Catalogo de iconos SVG
@@ -296,16 +355,19 @@ Biblioteca/
 │       ├── vistas.js         Registro de vistas
 │       ├── navegacion.js     Motor del carrusel circular (sin estilos)
 │       └── vistas/
-│           ├── portada.js    La estantería de libros
-│           ├── panel.js      El escritorio de la biblioteca
+│           ├── portada.js    La estantería de libros (la pantalla de inicio)
+│           ├── panel.js      El resumen de la biblioteca
 │           ├── catalogo.js
 │           ├── prestamos.js
+│           ├── usuarios.js
+│           ├── categorias.js
+│           ├── reportes.js
 │           └── gestion.js
 └── tests/
     ├── api.test.js           35 pruebas de la API y las reglas de negocio
-    ├── interfaz.test.js      17 pruebas de la interfaz en el navegador
+    ├── interfaz.test.js      25 pruebas de la interfaz en el navegador
     ├── estanteria.test.js    31 pruebas de la navegación circular
-    └── escritorio.test.js    17 pruebas del rediseño del panel
+    └── escritorio.test.js    18 pruebas del rediseño del panel
 ```
 
 La separación entre **rutas**, **servicios**, **repositorios** y **utilidades**
@@ -322,7 +384,7 @@ Navegador  ──HTTP/JSON──▶  Servidor Express  ──SQL──▶  SQLit
 ```
 
 - **Frontend:** aplicación de una sola página; La navegación usa `#/inicio`
-  (la estantería) y `#/panel`, `#/catalogo`, `#/prestamos`, `#/gestion`.
+  (la estantería) y `#/panel`, `#/catalogo`, `#/usuarios`, `#/prestamos`.
 - **Backend:** valida los datos, aplica las reglas y devuelve JSON.
 - **Base de datos:** cuatro tablas (`categorias`, `libros`, `estudiantes`,
   `prestamos`) con sus índices.
@@ -384,22 +446,25 @@ Las rutas de administración reciben la clave en la cabecera `x-admin-clave`.
 npm test
 ```
 
-Se ejecutan **100 pruebas** de forma automática:
+Se ejecutan **109 pruebas** de forma automática:
 
 - **35 de la API:** catálogo, búsqueda por cada campo, búsqueda inteligente con
   errores de escritura, validaciones del formulario, cálculo de la fecha límite,
   límites de préstamo, devolución, renovación, detección de atrasos, historial,
   estadísticas, recomendaciones y protección con clave.
-- **17 de la interfaz:** la página carga el panel, la navegación entre
-  secciones, el buscador, la ficha con recomendaciones, el registro de un
-  préstamo completo desde el formulario, el registro de una devolución, el
-  acceso del encargado y la ausencia de errores de JavaScript.
+- **25 de la interfaz:** la página carga la estantería como inicio, sus libros
+  son las secciones del sistema, no hay barra lateral, los datos de un
+  estudiante conocido se completan solos, el formulario avisa donde está el
+  error, la navegación entre secciones, el buscador, la ficha con
+  recomendaciones, el registro de un préstamo completo desde el formulario, el
+  registro de una devolución, el acceso del encargado y la ausencia de errores
+  de JavaScript.
 - **31 de la estantería:** la matemática del anillo, la profundidad de cada
   posición, la rueda con acumulación, el arrastre con inercia, el teclado, la
   apertura al elegir un libro, la limpieza del motor al salir de la sección y
   la garantía de que las cuatro rutas siguen funcionando.
-- **17 del escritorio:** que ya no queden tarjetas, gráficos ni tablas; que
-  cada ficha, libro, lomo, compartimento, hoja y carné corresponda a un dato
+- **18 del escritorio:** que ya no queden tarjetas, gráficos ni tablas; que
+  cada cifra, libro, lomo, compartimento, hoja y carné corresponda a un dato
   real de la API; que la altura de los lomos y de las hojas sea proporcional a
   la información; y que cada objeto lleve a la sección correcta.
 

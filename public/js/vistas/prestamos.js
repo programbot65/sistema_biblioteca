@@ -16,6 +16,16 @@ Vistas.prestamos = {
   async render(contenedor, parametros = {}) {
     this.libroPreseleccionado = parametros.libro ? Number(parametros.libro) : null;
 
+    // Los enlaces profundos (pila, avisos, usuarios) filtran de verdad.
+    // Cada navegación parte de los valores por defecto y aplica lo que
+    // traiga la dirección, para que el resultado sea siempre predecible.
+    this.filtros.situacion = parametros.situacion !== undefined ? (parametros.situacion || 'activo') : 'activo';
+    this.filtros.codigo = parametros.codigo || '';
+    this.filtros.cedula = parametros.cedula || '';
+    if ((parametros.codigo || parametros.cedula) && parametros.situacion === undefined) {
+      this.filtros.situacion = '';
+    }
+
     const { crear } = UI;
 
     contenedor.replaceChildren(
@@ -35,29 +45,6 @@ Vistas.prestamos = {
   construirFormulario() {
     const { crear } = UI;
     this.campos = {};
-
-    const contenedorCampos = crear('div', { clase: 'rejilla-formulario' }, [
-      this.campos.nombre = UI.campo({
-        etiqueta: 'Nombre completo', nombre: 'nombre', requerido: true,
-        ayuda: 'Solo se guardan los datos necesarios para el préstamo.'
-      }),
-      this.campos.cedula = UI.campo({
-        etiqueta: 'Cédula', nombre: 'cedula', tipo: 'tel', requerido: true,
-        ayuda: 'Entre 6 y 10 dígitos.'
-      }),
-      this.campos.curso = UI.campo({
-        etiqueta: 'Curso', nombre: 'curso', requerido: true,
-        opciones: ['', '1ro de Bachillerato', '2do de Bachillerato', '3ro de Bachillerato',
-          '4to de Bachillerato', '5to de Bachillerato', '6to de Bachillerato',
-          '1ro de Técnico', '2do de Técnico', '3ro de Técnico', '4to de Técnico', 'Otros']
-      }),
-      this.campos.dias = UI.campo({
-        etiqueta: 'Días de préstamo', nombre: 'dias_prestamo', tipo: 'number', valor: 7, requerido: true
-      }),
-      this.campos.fecha = UI.campo({
-        etiqueta: 'Fecha del préstamo', nombre: 'fecha_prestamo', tipo: 'date', valor: UI.hoy()
-      })
-    ]);
 
     this.campoLibro = UI.campo({
       etiqueta: 'Libro a prestar', nombre: 'libro_busqueda', requerido: true,
@@ -88,7 +75,83 @@ Vistas.prestamos = {
       }
     });
 
+    // Tres grupos claros, en este orden: el libro, quien se lo lleva y
+    // por cuanto tiempo. Cada grupo lleva su nota y sus campos alineados.
+    const grupoLibro = crear('div', { clase: 'formulario-grupo' }, [
+      crear('h4', { clase: 'formulario-grupo__titulo', texto: '1. Libro' }),
+      crear('div', { clase: 'bloque-busqueda-libro' }, [this.campoLibro, this.divSugerencias, this.divSeleccion])
+    ]);
+
+    const grupoEstudiante = crear('div', { clase: 'formulario-grupo' }, [
+      crear('h4', { clase: 'formulario-grupo__titulo', texto: '2. Estudiante' }),
+      crear('p', {
+        clase: 'formulario-grupo__nota',
+        texto: 'Escriba la cédula o el nombre: si el estudiante ya tiene préstamos, sus datos se completan solos.'
+      }),
+      crear('div', { clase: 'formulario-grupo__campos' }, [
+        this.campos.nombre = UI.campo({
+          etiqueta: 'Nombre completo', nombre: 'nombre', requerido: true
+        }),
+        this.campos.cedula = UI.campo({
+          etiqueta: 'Cédula', nombre: 'cedula', tipo: 'tel', requerido: true
+        }),
+        this.campos.curso = UI.campo({
+          etiqueta: 'Curso', nombre: 'curso', requerido: true,
+          opciones: ['', '8.º de EGB', '9.º de EGB', '10.º de EGB',
+            '1.º de Bachillerato', '2.º de Bachillerato', '3.º de Bachillerato']
+        })
+      ]),
+      this.divEstudiantes = crear('div', { clase: 'resultados-sugeridos' })
+    ]);
+
+    this.divEstudiantes.hidden = true;
+
+    // Busqueda de estudiantes ya conocidos: al escribir la cedula o el
+    // nombre se ofrecen los que yaestan registrados.
+    const entradaCedula = this.campos.cedula.querySelector('input');
+    const entradaNombre = this.campos.nombre.querySelector('input');
+
+    const buscarEstudiante = () => {
+      clearTimeout(this.temporizadorEstudiante);
+      this.temporizadorEstudiante = setTimeout(() => this.buscarEstudiantes(), 280);
+    };
+
+    entradaCedula.addEventListener('input', buscarEstudiante);
+    entradaNombre.addEventListener('input', buscarEstudiante);
+
+    entradaCedula.addEventListener('keydown', (evento) => {
+      if (evento.key === 'Escape') this.divEstudiantes.hidden = true;
+    });
+
+    // El teclado del movil ayuda y los limites evitan errores tontos.
+    entradaCedula.maxLength = 10;
+    entradaCedula.placeholder = '1712345678';
+
+    entradaNombre.maxLength = 80;
+    entradaNombre.placeholder = 'Nombre y apellido';
+
+    const grupoPlazo = crear('div', { clase: 'formulario-grupo' }, [
+      crear('h4', { clase: 'formulario-grupo__titulo', texto: '3. Plazo' }),
+      crear('p', {
+        clase: 'formulario-grupo__nota',
+        texto: 'La fecha límite se calcula sola con los días indicados.'
+      }),
+      crear('div', { clase: 'formulario-grupo__campos formulario-grupo__campos--corto' }, [
+        this.campos.dias = UI.campo({
+          etiqueta: 'Días de préstamo', nombre: 'dias_prestamo', tipo: 'number', valor: 7, requerido: true
+        }),
+        this.campos.fecha = UI.campo({
+          etiqueta: 'Fecha del préstamo', nombre: 'fecha_prestamo', tipo: 'date', valor: UI.hoy()
+        })
+      ])
+    ]);
+
+    const entradaDias = this.campos.dias.querySelector('input');
+    entradaDias.min = '1';
+    entradaDias.max = '60';
+
     this.formulario = crear('form', {
+      clase: 'formulario-prestamo',
       novalidate: true,
       onsubmit: (evento) => {
         evento.preventDefault();
@@ -96,8 +159,9 @@ Vistas.prestamos = {
       }
     }, [
       crear('div', { clase: 'grupo-campos' }, [
-        crear('div', { clase: 'bloque-busqueda-libro' }, [this.campoLibro, this.divSugerencias, this.divSeleccion]),
-        contenedorCampos,
+        grupoLibro,
+        grupoEstudiante,
+        grupoPlazo,
         crear('div', { clase: 'fila-botones' }, [
           crear('button', { clase: 'boton boton--primario', type: 'submit', texto: 'Registrar préstamo' }),
           crear('button', {
@@ -147,6 +211,95 @@ Vistas.prestamos = {
     }
   },
 
+  /**
+   * Busca estudiantes que ya tienen préstamos y los ofrece para completar
+   * el formulario. Si solo hay uno y la cédula ya está escrita, sus datos
+   * se rellenan solos.
+   */
+  async buscarEstudiantes() {
+    const { crear } = UI;
+
+    const cedula = this.valor('cedula');
+    const nombre = this.valor('nombre');
+    const texto = cedula.length >= 3 ? cedula : nombre;
+
+    if (!texto || texto.length < 3) {
+      this.divEstudiantes.hidden = true;
+      return;
+    }
+
+    try {
+      const datos = await Api.estudiantes(
+        cedula.length >= 3 ? { cedula: cedula, limite: 6 } : { q: nombre, limite: 6 }
+      );
+      const estudiantes = datos.estudiantes || [];
+
+      if (!estudiantes.length) {
+        this.divEstudiantes.hidden = true;
+        return;
+      }
+
+      this.divEstudiantes.hidden = false;
+      this.divEstudiantes.replaceChildren(...estudiantes.map((estudiante) => crear('button', {
+        type: 'button',
+        onclick: () => this.completarEstudiante(estudiante)
+      }, [
+        crear('strong', { texto: estudiante.nombre }),
+        crear('br'),
+        crear('small', { texto: `${estudiante.cedula} · ${estudiante.curso}` })
+      ])));
+
+      // Un solo estudiante y una cédula completa: se completa sin tocar nada.
+      if (estudiantes.length === 1 && cedula.length >= 6) {
+        this.completarEstudiante(estudiantes[0], true);
+      }
+    } catch (error) {
+      this.divEstudiantes.hidden = true;
+    }
+  },
+
+  /**
+   * Rellena nombre, cédula y curso con los datos del estudiante.
+   * Con `parcial` no se toca la cédula (la está escribiendo la persona),
+   * pero el nombre y el curso sí se actualizan.
+   */
+  completarEstudiante(estudiante, parcial = false) {
+    const entradaNombre = this.campos.nombre.querySelector('input');
+    const entradaCedula = this.campos.cedula.querySelector('input');
+
+    entradaNombre.value = estudiante.nombre;
+    if (!parcial) entradaCedula.value = estudiante.cedula;
+
+    this.fijarCurso(estudiante.curso);
+    this.divEstudiantes.hidden = true;
+    this.limpiarErroresEstudiante();
+  },
+
+  /** Elige un curso; si no estaba en la lista, se agrega (para no perderlo). */
+  fijarCurso(valor) {
+    const select = this.campos.curso.querySelector('select');
+    if (!select || !valor) return;
+
+    const existe = Array.from(select.options).some((opcion) => opcion.value === valor);
+    if (!existe) {
+      const { crear } = UI;
+      select.appendChild(crear('option', { valor: valor, texto: valor }));
+    }
+
+    select.value = valor;
+  },
+
+  /** Quita las marcas de error del grupo del estudiante. */
+  limpiarErroresEstudiante() {
+    for (const nombre of ['nombre', 'cedula', 'curso']) {
+      const campo = this.campos[nombre] && this.campos[nombre].closest('.campo');
+      if (!campo) continue;
+      campo.classList.remove('campo--error');
+      const mensaje = campo.querySelector('.campo__error');
+      if (mensaje) mensaje.textContent = '';
+    }
+  },
+
   elegirLibro(libro) {
     const entrada = this.campoLibro.querySelector('input');
     entrada.value = `${libro.codigo} - ${libro.titulo}`;
@@ -157,6 +310,9 @@ Vistas.prestamos = {
   pintarLibroSeleccionado(libro) {
     const { crear } = UI;
     this.libroSeleccionado = libro;
+
+    // Si el buscador estaba marcado con un error, ya no cuenta.
+    this.limpiarErrorLibro();
 
     this.divSeleccion.replaceChildren(crear('div', { clase: 'libro-seleccionado' }, [
       crear('div', {}, [
@@ -173,8 +329,29 @@ Vistas.prestamos = {
     ]));
   },
 
+  /** Quita la marca de error del buscador de libros. */
+  limpiarErrorLibro() {
+    const campo = this.campoLibro.closest('.campo');
+    if (!campo) return;
+    campo.classList.remove('campo--error');
+    const mensaje = campo.querySelector('.campo__error');
+    if (mensaje) mensaje.textContent = '';
+  },
+
   /** Permite elegir el libro desde el enlace que llega del catalogo. */
   async seleccionarLibro(id) {
+    // Sin id se quiere cambiar el libro: se limpia la seleccion.
+    if (!id) {
+      this.libroSeleccionado = null;
+      this.divSeleccion.replaceChildren();
+      const entrada = this.campoLibro.querySelector('input');
+      if (entrada) {
+        entrada.value = '';
+        entrada.focus();
+      }
+      return;
+    }
+
     try {
       const { libro } = await Api.libro(id);
       const entrada = this.campoLibro.querySelector('input');
@@ -192,21 +369,37 @@ Vistas.prestamos = {
     return entrada ? String(entrada.value).trim() : '';
   },
 
-  limpiarFormulario() {
+  /**
+   * Limpia el formulario. Con `mantenerEstudiante` se conservan el nombre,
+   * la cédula y el curso: así el siguiente préstamo para el mismo estudiante
+   * se hace sin volver a escribirlos.
+   */
+  limpiarFormulario(mantenerEstudiante = false) {
+    const nombre = this.valor('nombre');
+    const cedula = this.valor('cedula');
+    const curso = this.valor('curso');
+
     this.formulario.reset();
     this.libroSeleccionado = null;
     this.divSeleccion.replaceChildren();
     this.divSugerencias.hidden = true;
+    this.divEstudiantes.hidden = true;
     UI.marcarErrores(this.formulario, []);
     this.campos.fecha.querySelector('input').value = UI.hoy();
     this.campos.dias.querySelector('input').value = 7;
+
+    if (mantenerEstudiante && cedula) {
+      this.campos.nombre.querySelector('input').value = nombre;
+      this.campos.cedula.querySelector('input').value = cedula;
+      this.fijarCurso(curso);
+    }
   },
 
   async enviarPrestamo() {
     const boton = this.formulario.querySelector('button[type="submit"]');
 
     if (!this.libroSeleccionado) {
-      UI.alerta('Seleccione un libro de la lista de sugerencias.');
+      this.marcarErrorLibro('Elija un libro de la lista antes de registrar el préstamo.');
       return;
     }
 
@@ -225,17 +418,36 @@ Vistas.prestamos = {
     try {
       const resultado = await Api.registrarPrestamo(cuerpo);
       UI.exito(resultado.aviso);
-      this.limpiarFormulario();
+      // Los datos del estudiante se conservan: el siguiente préstamo se
+      // registra sin volver a escribirlos.
+      this.limpiarFormulario(true);
       await this.cargarLista();
+      // El foco vuelve al buscador: se puede registrar el siguiente libro
+      // sin tocar el ratón.
+      const entrada = this.campoLibro.querySelector('input');
+      if (entrada) entrada.focus();
     } catch (error) {
-      if (error instanceof Api.ErrorApi && error.detalles.length) {
-        UI.marcarErrores(this.formulario, error.detalles);
-      }
+      // La API llama "libro_id" al campo del libro; aqui se llama
+      // "libro_busqueda", asi que se renombra para marcarlo en su sitio.
+      const detalles = (error && error.detalles) || [];
+      const renombrados = detalles.map((detalle) =>
+        (detalle.campo === 'libro_id'
+          ? { ...detalle, campo: 'libro_busqueda' }
+          : detalle));
+
+      if (renombrados.length) UI.marcarErrores(this.formulario, renombrados);
       UI.errorApi(error);
     } finally {
       boton.disabled = false;
       boton.textContent = 'Registrar préstamo';
     }
+  },
+
+  /** Marca el buscador de libros con un error y lleva el foco a el. */
+  marcarErrorLibro(mensaje) {
+    UI.marcarErrores(this.formulario, [{ campo: 'libro_busqueda', mensaje }]);
+    const entrada = this.campoLibro.querySelector('input');
+    if (entrada) entrada.focus();
   },
 
   // ---------------------------------------------------------------
